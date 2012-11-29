@@ -76,7 +76,7 @@ if test "$PHP_GROONGA" != "no"; then
   PHP_CHECK_LIBRARY(groonga, grn_get_version,
     [
       PHP_EVAL_INCLINE($GROONGA_INCLINE)
-      PHP_EVAL_LIBLINE($GROONGA_LIBLINE, GROONGA_SHARED_LIBADD)
+      PHP_EVAL_LIBLINE($GROONGA_LIBLINE, PHROONGA_SHARED_LIBADD)
     ],[
       AC_MSG_ERROR([wrong groonga library version or lib not found. Check config.log for more information])
     ],[
@@ -89,7 +89,6 @@ if test "$PHP_GROONGA" != "no"; then
   PHROONGA_SOURCES="$PHROONGA_SOURCES geo.c log.c expr.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES hash.c array.c pat.c dat.c"
 
-  PHROONGA_SHARED_LIBADD="$GROONGA_SHARED_LIBADD"
   PHP_SUBST(PHROONGA_SHARED_LIBADD)
   PHP_NEW_EXTENSION(phroonga, $PHROONGA_SOURCES, $ext_shared)
 fi
