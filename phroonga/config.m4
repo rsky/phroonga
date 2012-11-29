@@ -85,7 +85,7 @@ if test "$PHP_GROONGA" != "no"; then
   export LIBS="$OLD_LIBS"
 
   PHROONGA_SOURCES="phroonga.c"
-  PHROONGA_SOURCES="$PHROONGA_SOURCES default.c ctx.c obj.c"
+  PHROONGA_SOURCES="$PHROONGA_SOURCES ctx.c obj.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES geo.c log.c expr.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES hash.c array.c pat.c dat.c"
 
