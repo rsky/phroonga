@@ -8,6 +8,9 @@
  */
 
 #include "phroonga.h"
+#include <php_ini.h>
+#include <ext/standard/info.h>
+#include <Zend/zend_extensions.h>
 #include "array.h"
 #include "ctx.h"
 #include "dat.h"
@@ -17,7 +20,15 @@
 #include "log.h"
 #include "obj.h"
 #include "pat.h"
+#include <php_ini.h>
+#include <ext/standard/info.h>
+#include <Zend/zend_extensions.h>
 
+/* {{{ globals */
+
+PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
+
+/* }}} */
 /* {{{ function prototypes */
 
 /* module functions */
@@ -26,6 +37,8 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga);
 static PHP_RINIT_FUNCTION(phroonga);
 static PHP_RSHUTDOWN_FUNCTION(phroonga);
 static PHP_MINFO_FUNCTION(phroonga);
+static PHP_GINIT_FUNCTION(phroonga);
+static PHP_GSHUTDOWN_FUNCTION(phroonga);
 
 /* functions to register constants */
 #define PRN_REGISTER_CONSTANT(name) \
@@ -56,19 +69,56 @@ static void prn_register_obj_format_flags(INIT_FUNC_ARGS);
 static void prn_register_expr_flags(INIT_FUNC_ARGS);
 static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS);
 
+/* phroonga PHP functions */
+
+static PHP_FUNCTION(grn_get_version);
+static PHP_FUNCTION(grn_get_package);
+static PHP_FUNCTION(grn_get_default_encoding);
+static PHP_FUNCTION(grn_set_default_encoding);
+static PHP_FUNCTION(grn_get_default_command_version);
+static PHP_FUNCTION(grn_set_default_command_version);
+static PHP_FUNCTION(grn_get_default_match_escalation_threshold);
+static PHP_FUNCTION(grn_set_default_match_escalation_threshold);
+
 /* }}} */
 /* {{{ argument informations */
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_encoding, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, encoding)
+ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_command_version, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, version)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_match_escalation_threshold, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, threshold)
+ZEND_END_ARG_INFO()
+
+/* {{{ argument informations (log) */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_default_logger_set_max_level, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, level)
+ZEND_END_ARG_INFO()
 
 /* }}} */
 /* {{{ phroonga_functions */
 
 static zend_function_entry phroonga_functions[] = {
+	PHP_FE(grn_get_version, NULL)
+	PHP_FE(grn_get_package, NULL)
+	PHP_FE(grn_get_default_encoding, NULL)
+	PHP_FE(grn_set_default_encoding, arginfo_set_default_encoding)
+	PHP_FE(grn_get_default_command_version, NULL)
+	PHP_FE(grn_set_default_command_version, arginfo_set_default_command_version)
+	PHP_FE(grn_get_default_match_escalation_threshold, NULL)
+	PHP_FE(grn_set_default_match_escalation_threshold, arginfo_set_default_match_escalation_threshold)
 	/* ctx */
 	/* obj */
 	/* geo */
 	/* log */
+	PHP_FE(grn_default_logger_get_max_level, NULL)
+	PHP_FE(grn_default_logger_set_max_level, arginfo_default_logger_set_max_level)
 	/* expr */
 	/* hash */
 	/* array */
@@ -100,7 +150,11 @@ zend_module_entry phroonga_module_entry = {
 	PHP_RSHUTDOWN(phroonga),
 	PHP_MINFO(phroonga),
 	PHROONGA_VERSION,
-	STANDARD_MODULE_PROPERTIES
+	PHP_MODULE_GLOBALS(phroonga),
+	PHP_GINIT(phroonga),
+	PHP_GSHUTDOWN(phroonga),
+	NULL,
+	STANDARD_MODULE_PROPERTIES_EX
 };
 
 #ifdef COMPILE_DL_PHROONGA
@@ -129,6 +183,7 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga)
 	if (grn_fin() != GRN_SUCCESS) {
 		return FAILURE;
 	}
+
 	return SUCCESS;
 }
 
@@ -159,6 +214,30 @@ static PHP_MINFO_FUNCTION(phroonga)
 	php_info_print_table_row(2, "groonga version (compiled)", PRN_GROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (linking)", grn_get_version());
 	php_info_print_table_end();
+}
+
+/* }}} */
+/* {{{ PHP_GINIT_FUNCTION */
+
+static PHP_GINIT_FUNCTION(phroonga)
+{
+	phroonga_globals->default_encoding = GRN_ENC_DEFAULT;
+	phroonga_globals->version = GRN_COMMAND_VERSION_DEFAULT;
+	phroonga_globals->default_match_escalation_threshold = 0LL;
+	phroonga_globals->default_logger_max_level = GRN_LOG_DEFAULT_LEVEL;
+#ifdef ZTS
+	phroonga_globals->mutexp = tsrm_mutex_alloc();
+#endif
+}
+
+/* }}} */
+/* {{{ PHP_GSHUTDOWN_FUNCTION */
+
+static PHP_GSHUTDOWN_FUNCTION(phroonga)
+{
+#ifdef ZTS
+	tsrm_mutex_free(phroonga_globals->mutexp);
+#endif
 }
 
 /* }}} */
@@ -576,6 +655,153 @@ static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS)
 	PRN_REGISTER_CONSTANT(GRN_CTX_HEAD);
 	PRN_REGISTER_CONSTANT(GRN_CTX_QUIET);
 	PRN_REGISTER_CONSTANT(GRN_CTX_QUIT);
+}
+
+/* }}} */
+/* {{{ grn_get_version() */
+
+static PHP_FUNCTION(grn_get_version)
+{
+	const char *version;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	version = grn_get_version();
+
+	RETURN_STRING(version, 1);
+}
+
+/* }}} */
+/* {{{ grn_get_package() */
+
+static PHP_FUNCTION(grn_get_package)
+{
+	const char *package;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	package = grn_get_package();
+
+	RETURN_STRING(package, 1);
+}
+
+/* }}} */
+/* {{{ grn_get_default_encoding() */
+
+static PHP_FUNCTION(grn_get_default_encoding)
+{
+	grn_encoding encoding;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	PRN_MUTEX_LOCK();
+	encoding = grn_get_default_encoding();
+	PRN_MUTEX_UNLOCK();
+
+	RETURN_LONG((long)encoding);
+}
+
+/* }}} */
+/* {{{ grn_set_default_encoding() */
+
+static PHP_FUNCTION(grn_set_default_encoding)
+{
+	long encoding = 0L;
+	grn_rc rc;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &encoding) == FAILURE) {
+		return;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_encoding((grn_encoding)encoding);
+	PRN_MUTEX_UNLOCK();
+
+	RETURN_LONG((long)rc);
+}
+
+/* }}} */
+/* {{{ () */
+
+static PHP_FUNCTION(grn_get_default_command_version)
+{
+	grn_command_version version;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	PRN_MUTEX_LOCK();
+	version = grn_get_default_command_version();
+	PRN_MUTEX_UNLOCK();
+
+	RETURN_LONG((long)version);
+}
+
+/* }}} */
+/* {{{ grn_set_default_command_version() */
+
+static PHP_FUNCTION(grn_set_default_command_version)
+{
+	long version = 0L;
+	grn_rc rc;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &version) == FAILURE) {
+		return;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_command_version((grn_command_version)version);
+	PRN_MUTEX_UNLOCK();
+
+	RETURN_LONG((long)rc);
+}
+
+/* }}} */
+/* {{{ grn_get_default_match_escalation_threshold() */
+
+static PHP_FUNCTION(grn_get_default_match_escalation_threshold)
+{
+	long long int threshold;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	PRN_MUTEX_LOCK();
+	threshold = grn_get_default_match_escalation_threshold();
+	PRN_MUTEX_UNLOCK();
+
+	if (LONG_MIN <= threshold && threshold <= LONG_MAX) {
+		RETURN_LONG((long)threshold);
+	} else {
+		RETURN_DOUBLE((double)threshold);
+	}
+}
+
+/* }}} */
+/* {{{ grn_set_default_match_escalation_threshold() */
+
+static PHP_FUNCTION(grn_set_default_match_escalation_threshold)
+{
+	long threshold = 0L;
+	grn_rc rc;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &threshold) == FAILURE) {
+		return;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_match_escalation_threshold((long long int)threshold);
+	PRN_MUTEX_UNLOCK();
+
+	RETURN_LONG((long)rc);
 }
 
 /* }}} */
