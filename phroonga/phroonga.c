@@ -29,9 +29,8 @@
 PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
 
 /* }}} */
-/* {{{ function prototypes */
+/* {{{ function prototypes (module) */
 
-/* module functions */
 static PHP_MINIT_FUNCTION(phroonga);
 static PHP_MSHUTDOWN_FUNCTION(phroonga);
 static PHP_RINIT_FUNCTION(phroonga);
@@ -39,6 +38,9 @@ static PHP_RSHUTDOWN_FUNCTION(phroonga);
 static PHP_MINFO_FUNCTION(phroonga);
 static PHP_GINIT_FUNCTION(phroonga);
 static PHP_GSHUTDOWN_FUNCTION(phroonga);
+
+/* }}} */
+/* {{{ function prototypes (internal) */
 
 /* functions to register constants */
 #define PRN_REGISTER_CONSTANT(name) \
@@ -69,7 +71,8 @@ static void prn_register_obj_format_flags(INIT_FUNC_ARGS);
 static void prn_register_expr_flags(INIT_FUNC_ARGS);
 static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS);
 
-/* phroonga PHP functions */
+/* }}} */
+/* {{{ function prototypes (PHP) */
 
 static PHP_FUNCTION(grn_get_version);
 static PHP_FUNCTION(grn_get_package);
@@ -95,6 +98,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_match_escalation_threshold, ZEND_SEND
 	ZEND_ARG_INFO(0, threshold)
 ZEND_END_ARG_INFO()
 
+/* }}} */
 /* {{{ argument informations (log) */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_default_logger_set_max_level, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
@@ -102,7 +106,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_default_logger_set_max_level, ZEND_SEND_BY_VAL, Z
 ZEND_END_ARG_INFO()
 
 /* }}} */
-/* {{{ phroonga_functions */
+/* {{{ function entry */
 
 static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_get_version, NULL)
@@ -129,14 +133,14 @@ static zend_function_entry phroonga_functions[] = {
 };
 
 /* }}} */
-/* {{{ cross-extension dependencies */
+/* {{{ module dependencies */
 
 static zend_module_dep phroonga_deps[] = {
 	{NULL, NULL, NULL, 0}
 };
 
 /* }}} */
-/* {{{ phroonga_module_entry */
+/* {{{ module entry */
 
 zend_module_entry phroonga_module_entry = {
 	STANDARD_MODULE_HEADER_EX,
@@ -727,7 +731,7 @@ static PHP_FUNCTION(grn_set_default_encoding)
 }
 
 /* }}} */
-/* {{{ () */
+/* {{{ grn_get_default_command_version() */
 
 static PHP_FUNCTION(grn_get_default_command_version)
 {
