@@ -222,7 +222,7 @@ static PHP_MINFO_FUNCTION(phroonga)
 static PHP_GINIT_FUNCTION(phroonga)
 {
 	phroonga_globals->default_encoding = GRN_ENC_DEFAULT;
-	phroonga_globals->version = GRN_COMMAND_VERSION_DEFAULT;
+	phroonga_globals->default_command_version = GRN_COMMAND_VERSION_DEFAULT;
 	phroonga_globals->default_match_escalation_threshold = 0LL;
 	phroonga_globals->default_logger_max_level = GRN_LOG_DEFAULT_LEVEL;
 #ifdef ZTS

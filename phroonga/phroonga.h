@@ -29,10 +29,10 @@
 BEGIN_EXTERN_C()
 
 ZEND_BEGIN_MODULE_GLOBALS(phroonga)
-	grn_encoding default_encoding;
-	grn_command_version version;
-	long long int default_match_escalation_threshold;
-	grn_log_level default_logger_max_level;
+	grn_encoding        default_encoding;
+	grn_command_version default_command_version;
+	long long int       default_match_escalation_threshold;
+	grn_log_level       default_logger_max_level;
 #ifdef ZTS
 	MUTEX_T mutexp;
 #endif
