@@ -42,8 +42,6 @@ PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
 #define PRN_INI_HASH_ADD_ALIAS(ht, value, alias) \
 	prn_ini_non_ts_hash_add(TS_HASH(ht), alias, value)
 
-#define PRN_INI_MH_ARGS_PASSTHRU entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage TSRMLS_CC
-
 /* }}} */
 /* {{{ function prototypes (module) */
 
@@ -895,8 +893,8 @@ static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
 static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue)
 {
 	char *arKey = zend_str_tolower_dup(key, length);
-	zend_bool found = 0;
 	int *pData = NULL;
+	zend_bool found = 0;
 
 	if (zend_ts_hash_find(ht, arKey, length + 1, (void **)&pData) == SUCCESS) {
 		found = 1;
