@@ -145,22 +145,14 @@ static zend_module_dep phroonga_deps[] = {
 /* {{{ ini entries */
 
 PHP_INI_BEGIN()
-STD_PHP_INI_ENTRY(
-	"phroonga.default_encoding", "", PHP_INI_SYSTEM,
-	prn_update_default_encoding, default_encoding,
-	zend_phroonga_globals, phroonga_globals)
-STD_PHP_INI_ENTRY(
-	"phroonga.default_command_version", "", PHP_INI_SYSTEM,
-	prn_update_default_command_version, default_command_version,
-	zend_phroonga_globals, phroonga_globals)
-STD_PHP_INI_ENTRY(
-	"phroonga.default_match_escalation_threshold", "0", PHP_INI_SYSTEM,
-	prn_update_default_match_escalation_threshold, default_match_escalation_threshold,
-	zend_phroonga_globals, phroonga_globals)
-STD_PHP_INI_ENTRY(
-	"phroonga.default_logger_max_level", "", PHP_INI_SYSTEM,
-	prn_update_default_logger_set_max_level, default_logger_max_level,
-	zend_phroonga_globals, phroonga_globals)
+PHP_INI_ENTRY("phroonga.default_encoding", "",
+	PHP_INI_SYSTEM, prn_update_default_encoding)
+PHP_INI_ENTRY("phroonga.default_command_version", "",
+	PHP_INI_SYSTEM, prn_update_default_command_version)
+PHP_INI_ENTRY("phroonga.default_match_escalation_threshold", "0",
+	PHP_INI_SYSTEM, prn_update_default_match_escalation_threshold)
+PHP_INI_ENTRY("phroonga.default_logger_max_level", "",
+	PHP_INI_SYSTEM, prn_update_default_logger_set_max_level)
 PHP_INI_END()
 
 /* }}} */
@@ -255,16 +247,13 @@ static PHP_MINFO_FUNCTION(phroonga)
 
 static PHP_GINIT_FUNCTION(phroonga)
 {
-	memset(phroonga_globals, 0, sizeof(zend_phroonga_globals));
+	phroonga_globals->encodings_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
+	phroonga_globals->command_versions_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
+	phroonga_globals->log_levels_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 
-	phroonga_globals->default_encoding = GRN_ENC_DEFAULT;
-	phroonga_globals->default_command_version = GRN_COMMAND_VERSION_DEFAULT;
-	phroonga_globals->default_match_escalation_threshold = 0LL;
-	phroonga_globals->default_logger_max_level = GRN_LOG_DEFAULT_LEVEL;
-
-	prn_init_encodings_ht(&phroonga_globals->encodings_ht TSRMLS_CC);
-	prn_init_command_versions_ht(&phroonga_globals->command_versions_ht TSRMLS_CC);
-	prn_init_log_levels_ht(&phroonga_globals->log_levels_ht TSRMLS_CC);
+	prn_init_encodings_ht(phroonga_globals->encodings_ht TSRMLS_CC);
+	prn_init_command_versions_ht(phroonga_globals->command_versions_ht TSRMLS_CC);
+	prn_init_log_levels_ht(phroonga_globals->log_levels_ht TSRMLS_CC);
 
 #ifdef ZTS
 	phroonga_globals->mutexp = tsrm_mutex_alloc();
@@ -276,9 +265,14 @@ static PHP_GINIT_FUNCTION(phroonga)
 
 static PHP_GSHUTDOWN_FUNCTION(phroonga)
 {
-	zend_ts_hash_destroy(&phroonga_globals->encodings_ht);
-	zend_ts_hash_destroy(&phroonga_globals->command_versions_ht);
-	zend_ts_hash_destroy(&phroonga_globals->log_levels_ht);
+	zend_ts_hash_destroy(phroonga_globals->encodings_ht);
+	zend_ts_hash_destroy(phroonga_globals->command_versions_ht);
+	zend_ts_hash_destroy(phroonga_globals->log_levels_ht);
+
+	pefree(phroonga_globals->encodings_ht, 1);
+	pefree(phroonga_globals->command_versions_ht, 1);
+	pefree(phroonga_globals->log_levels_ht, 1);
+
 #ifdef ZTS
 	tsrm_mutex_free(phroonga_globals->mutexp);
 #endif
@@ -704,10 +698,9 @@ static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS)
 /* }}} */
 /* {{{ ini handlers */
 
-
 static PHP_INI_MH(prn_update_default_encoding)
 {
-	TsHashTable *ht = &PRNG(encodings_ht);
+	TsHashTable *ht = PRNG(encodings_ht);
 	grn_encoding encoding = GRN_ENC_DEFAULT;
 	grn_rc rc;
 
@@ -730,12 +723,12 @@ static PHP_INI_MH(prn_update_default_encoding)
 		return FAILURE;
 	}
 
-	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+	return SUCCESS;
 }
 
 static PHP_INI_MH(prn_update_default_command_version)
 {
-	TsHashTable *ht = &PRNG(command_versions_ht);
+	TsHashTable *ht = PRNG(command_versions_ht);
 	grn_command_version version = GRN_COMMAND_VERSION_DEFAULT;
 	grn_rc rc;
 
@@ -758,7 +751,7 @@ static PHP_INI_MH(prn_update_default_command_version)
 		return FAILURE;
 	}
 
-	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+	return SUCCESS;
 }
 
 static PHP_INI_MH(prn_update_default_match_escalation_threshold)
@@ -779,12 +772,12 @@ static PHP_INI_MH(prn_update_default_match_escalation_threshold)
 		return FAILURE;
 	}
 
-	return OnUpdateLongGEZero(PRN_INI_MH_ARGS_PASSTHRU);
+	return SUCCESS;
 }
 
 static PHP_INI_MH(prn_update_default_logger_set_max_level)
 {
-	TsHashTable *ht = &PRNG(log_levels_ht);
+	TsHashTable *ht = PRNG(log_levels_ht);
 	grn_log_level level = GRN_LOG_DEFAULT_LEVEL;
 
 	if (new_value && new_value[0]) {
@@ -802,7 +795,7 @@ static PHP_INI_MH(prn_update_default_logger_set_max_level)
 	grn_default_logger_set_max_level(level);
 	PRN_MUTEX_UNLOCK();
 
-	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+	return SUCCESS;
 }
 
 /* }}} */
