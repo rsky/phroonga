@@ -1,8 +1,15 @@
 --TEST--
-grn_get_default_command_version() function
+grn_get_default_encoding() function
+--INI--
+phroonga.default_encoding = GRN_ENC_LATIN1
 --FILE--
 <?php
-echo grn_get_default_command_version();
+$encoding = grn_get_default_encoding();
+if ($encoding === GRN_ENC_LATIN1) {
+    echo 'OK';
+} else {
+    echo "NG: {$encoding}";
+}
 ?>
 --EXPECT--
-1
+OK

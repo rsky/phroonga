@@ -29,6 +29,22 @@
 PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
 
 /* }}} */
+/* {{{ miscellaneous macros */
+
+#define PRN_REGISTER_CONSTANT(name) \
+	REGISTER_LONG_CONSTANT(#name, name, CONST_PERSISTENT | CONST_CS)
+
+#define PRN_INI_HASH_KEY_MAX_SIZE 32
+
+#define PRN_INI_HASH_ADD(ht, value) \
+	prn_ini_non_ts_hash_add(TS_HASH(ht), #value, value)
+
+#define PRN_INI_HASH_ADD_ALIAS(ht, value, alias) \
+	prn_ini_non_ts_hash_add(TS_HASH(ht), alias, value)
+
+#define PRN_INI_MH_ARGS_PASSTHRU entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage TSRMLS_CC
+
+/* }}} */
 /* {{{ function prototypes (module) */
 
 static PHP_MINIT_FUNCTION(phroonga);
@@ -43,8 +59,6 @@ static PHP_GSHUTDOWN_FUNCTION(phroonga);
 /* {{{ function prototypes (internal) */
 
 /* functions to register constants */
-#define PRN_REGISTER_CONSTANT(name) \
-	REGISTER_LONG_CONSTANT(#name, name, CONST_PERSISTENT | CONST_CS)
 
 static void prn_register_constants(INIT_FUNC_ARGS);
 
@@ -71,39 +85,31 @@ static void prn_register_obj_format_flags(INIT_FUNC_ARGS);
 static void prn_register_expr_flags(INIT_FUNC_ARGS);
 static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS);
 
+/* functions to handle ini entries */
+static ZEND_INI_MH(prn_update_default_encoding);
+static ZEND_INI_MH(prn_update_default_command_version);
+static ZEND_INI_MH(prn_update_default_match_escalation_threshold);
+static ZEND_INI_MH(prn_update_default_logger_set_max_level);
+static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC);
+static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC);
+static void prn_init_log_levels_ht(TsHashTable *ht TSRMLS_DC);
+static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value);
+static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue);
+
 /* }}} */
 /* {{{ function prototypes (PHP) */
 
 static PHP_FUNCTION(grn_get_version);
 static PHP_FUNCTION(grn_get_package);
 static PHP_FUNCTION(grn_get_default_encoding);
-static PHP_FUNCTION(grn_set_default_encoding);
 static PHP_FUNCTION(grn_get_default_command_version);
-static PHP_FUNCTION(grn_set_default_command_version);
 static PHP_FUNCTION(grn_get_default_match_escalation_threshold);
-static PHP_FUNCTION(grn_set_default_match_escalation_threshold);
 
 /* }}} */
 /* {{{ argument informations */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_encoding, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, encoding)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_command_version, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, version)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_set_default_match_escalation_threshold, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, threshold)
-ZEND_END_ARG_INFO()
-
 /* }}} */
 /* {{{ argument informations (log) */
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_default_logger_set_max_level, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, level)
-ZEND_END_ARG_INFO()
 
 /* }}} */
 /* {{{ function entry */
@@ -112,17 +118,13 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_get_version, NULL)
 	PHP_FE(grn_get_package, NULL)
 	PHP_FE(grn_get_default_encoding, NULL)
-	PHP_FE(grn_set_default_encoding, arginfo_set_default_encoding)
 	PHP_FE(grn_get_default_command_version, NULL)
-	PHP_FE(grn_set_default_command_version, arginfo_set_default_command_version)
 	PHP_FE(grn_get_default_match_escalation_threshold, NULL)
-	PHP_FE(grn_set_default_match_escalation_threshold, arginfo_set_default_match_escalation_threshold)
 	/* ctx */
 	/* obj */
 	/* geo */
 	/* log */
 	PHP_FE(grn_default_logger_get_max_level, NULL)
-	PHP_FE(grn_default_logger_set_max_level, arginfo_default_logger_set_max_level)
 	/* expr */
 	/* hash */
 	/* array */
@@ -138,6 +140,28 @@ static zend_function_entry phroonga_functions[] = {
 static zend_module_dep phroonga_deps[] = {
 	{NULL, NULL, NULL, 0}
 };
+
+/* }}} */
+/* {{{ ini entries */
+
+PHP_INI_BEGIN()
+STD_PHP_INI_ENTRY(
+	"phroonga.default_encoding", "", PHP_INI_SYSTEM,
+	prn_update_default_encoding, default_encoding,
+	zend_phroonga_globals, phroonga_globals)
+STD_PHP_INI_ENTRY(
+	"phroonga.default_command_version", "", PHP_INI_SYSTEM,
+	prn_update_default_command_version, default_command_version,
+	zend_phroonga_globals, phroonga_globals)
+STD_PHP_INI_ENTRY(
+	"phroonga.default_match_escalation_threshold", "0", PHP_INI_SYSTEM,
+	prn_update_default_match_escalation_threshold, default_match_escalation_threshold,
+	zend_phroonga_globals, phroonga_globals)
+STD_PHP_INI_ENTRY(
+	"phroonga.default_logger_max_level", "", PHP_INI_SYSTEM,
+	prn_update_default_logger_set_max_level, default_logger_max_level,
+	zend_phroonga_globals, phroonga_globals)
+PHP_INI_END()
 
 /* }}} */
 /* {{{ module entry */
@@ -174,6 +198,8 @@ static PHP_MINIT_FUNCTION(phroonga)
 		return FAILURE;
 	}
 
+	REGISTER_INI_ENTRIES();
+
 	prn_register_constants(INIT_FUNC_ARGS_PASSTHRU);
 
 	return SUCCESS;
@@ -184,6 +210,8 @@ static PHP_MINIT_FUNCTION(phroonga)
 
 static PHP_MSHUTDOWN_FUNCTION(phroonga)
 {
+	UNREGISTER_INI_ENTRIES();
+
 	if (grn_fin() != GRN_SUCCESS) {
 		return FAILURE;
 	}
@@ -218,6 +246,8 @@ static PHP_MINFO_FUNCTION(phroonga)
 	php_info_print_table_row(2, "groonga version (compiled)", PRN_GROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (linking)", grn_get_version());
 	php_info_print_table_end();
+
+	DISPLAY_INI_ENTRIES();
 }
 
 /* }}} */
@@ -225,10 +255,17 @@ static PHP_MINFO_FUNCTION(phroonga)
 
 static PHP_GINIT_FUNCTION(phroonga)
 {
+	memset(phroonga_globals, 0, sizeof(zend_phroonga_globals));
+
 	phroonga_globals->default_encoding = GRN_ENC_DEFAULT;
 	phroonga_globals->default_command_version = GRN_COMMAND_VERSION_DEFAULT;
 	phroonga_globals->default_match_escalation_threshold = 0LL;
 	phroonga_globals->default_logger_max_level = GRN_LOG_DEFAULT_LEVEL;
+
+	prn_init_encodings_ht(&phroonga_globals->encodings_ht TSRMLS_CC);
+	prn_init_command_versions_ht(&phroonga_globals->command_versions_ht TSRMLS_CC);
+	prn_init_log_levels_ht(&phroonga_globals->log_levels_ht TSRMLS_CC);
+
 #ifdef ZTS
 	phroonga_globals->mutexp = tsrm_mutex_alloc();
 #endif
@@ -239,6 +276,9 @@ static PHP_GINIT_FUNCTION(phroonga)
 
 static PHP_GSHUTDOWN_FUNCTION(phroonga)
 {
+	zend_ts_hash_destroy(&phroonga_globals->encodings_ht);
+	zend_ts_hash_destroy(&phroonga_globals->command_versions_ht);
+	zend_ts_hash_destroy(&phroonga_globals->log_levels_ht);
 #ifdef ZTS
 	tsrm_mutex_free(phroonga_globals->mutexp);
 #endif
@@ -662,6 +702,223 @@ static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS)
 }
 
 /* }}} */
+/* {{{ ini handlers */
+
+
+static ZEND_INI_MH(prn_update_default_encoding)
+{
+	TsHashTable *ht = &PRNG(encodings_ht);
+	grn_encoding encoding = GRN_ENC_DEFAULT;
+	grn_rc rc;
+
+	if (new_value && new_value[0]) {
+		int value = 0;
+		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+			encoding = (grn_encoding)value;
+		} else {
+			return FAILURE;
+		}
+	} else {
+		return FAILURE;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_encoding(encoding);
+	PRN_MUTEX_UNLOCK();
+
+	if (rc != GRN_SUCCESS) {
+		return FAILURE;
+	}
+
+	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+}
+
+static ZEND_INI_MH(prn_update_default_command_version)
+{
+	TsHashTable *ht = &PRNG(command_versions_ht);
+	grn_command_version version = GRN_COMMAND_VERSION_DEFAULT;
+	grn_rc rc;
+
+	if (new_value && new_value[0]) {
+		int value = 0;
+		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+			version = (grn_command_version)value;
+		} else {
+			return FAILURE;
+		}
+	} else {
+		return FAILURE;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_command_version(version);
+	PRN_MUTEX_UNLOCK();
+
+	if (rc != GRN_SUCCESS) {
+		return FAILURE;
+	}
+
+	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+}
+
+static ZEND_INI_MH(prn_update_default_match_escalation_threshold)
+{
+	long threshold;
+	grn_rc rc;
+
+	threshold = zend_atol(new_value, new_value_length);
+	if (threshold < 0L) {
+		return FAILURE;
+	}
+
+	PRN_MUTEX_LOCK();
+	rc = grn_set_default_match_escalation_threshold((long long int)threshold);
+	PRN_MUTEX_UNLOCK();
+
+	if (rc != GRN_SUCCESS) {
+		return FAILURE;
+	}
+
+	return OnUpdateLongGEZero(PRN_INI_MH_ARGS_PASSTHRU);
+}
+
+static ZEND_INI_MH(prn_update_default_logger_set_max_level)
+{
+	TsHashTable *ht = &PRNG(log_levels_ht);
+	grn_log_level level = GRN_LOG_DEFAULT_LEVEL;
+
+	if (new_value && new_value[0]) {
+		int value = 0;
+		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+			level = (grn_log_level)value;
+		} else {
+			return FAILURE;
+		}
+	} else {
+		return FAILURE;
+	}
+
+	PRN_MUTEX_LOCK();
+	grn_default_logger_set_max_level(level);
+	PRN_MUTEX_UNLOCK();
+
+	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
+}
+
+/* }}} */
+/* {{{ global hash table initializers */
+
+static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC)
+{
+	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
+
+	PRN_INI_HASH_ADD(ht, GRN_ENC_DEFAULT);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_NONE);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_EUC_JP);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_UTF8);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_SJIS);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_LATIN1);
+	PRN_INI_HASH_ADD(ht, GRN_ENC_KOI8R);
+
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_DEFAULT, "default");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_NONE, "none");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_EUC_JP, "euc-jp");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_EUC_JP, "eucjp");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_UTF8, "utf8");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_UTF8, "utf-8");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_SJIS, "sjis");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_SJIS, "shift_jis");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_LATIN1, "latin1");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_LATIN1, "latin-1");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_KOI8R, "koi8r");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_KOI8R, "koi8-r");
+}
+
+static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC)
+{
+	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
+
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_DEFAULT);
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_1);
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_2);
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_MIN);
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_STABLE);
+	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_MAX);
+
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_DEFAULT, "default");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_MIN, "min");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_STABLE, "stable");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_MAX, "max");
+}
+
+static void prn_init_log_levels_ht(TsHashTable *ht TSRMLS_DC)
+{
+	zend_ts_hash_init(ht, 64, NULL, NULL, 1);
+
+	PRN_INI_HASH_ADD(ht, GRN_LOG_NONE);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_EMERG);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_ALERT);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_CRIT);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_ERROR);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_WARNING);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_NOTICE);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_INFO);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_DEBUG);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_DUMP);
+	PRN_INI_HASH_ADD(ht, GRN_LOG_DEFAULT_LEVEL);
+
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_NONE, "none");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_EMERG, "emerg");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_ALERT, "alert");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_CRIT, "crit");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_ERROR, "error");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_WARNING, "warning");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_NOTICE, "notice");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_INFO, "info");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DEBUG, "debug");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DUMP, "dump");
+	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DEFAULT_LEVEL, "default");
+}
+
+/* {{{ hash utilities */
+/* }}} */
+
+static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
+{
+	char buf[PRN_INI_HASH_KEY_MAX_SIZE];
+	const char *arKey;
+	uint length;
+
+	zend_hash_index_update(ht, (ulong)value, &value, sizeof(int), NULL);
+
+	length = (uint)strlen(key);
+	if (length >= PRN_INI_HASH_KEY_MAX_SIZE) {
+		length = PRN_INI_HASH_KEY_MAX_SIZE - 1;
+	}
+	arKey = zend_str_tolower_copy(buf, key, length);
+	zend_hash_update(ht, arKey, length + 1, (void *)&value, sizeof(int), NULL);
+}
+
+static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue)
+{
+	char *arKey = zend_str_tolower_dup(key, length);
+	zend_bool found = 0;
+	int *pData = NULL;
+
+	if (zend_ts_hash_find(ht, arKey, length + 1, (void **)&pData) == SUCCESS) {
+		found = 1;
+	}
+
+	efree(arKey);
+
+	if (found && pValue) {
+		*pValue = *pData;
+	}
+
+	return found;
+}
+
+/* }}} */
 /* {{{ grn_get_version() */
 
 static PHP_FUNCTION(grn_get_version)
@@ -712,25 +969,6 @@ static PHP_FUNCTION(grn_get_default_encoding)
 }
 
 /* }}} */
-/* {{{ grn_set_default_encoding() */
-
-static PHP_FUNCTION(grn_set_default_encoding)
-{
-	long encoding = 0L;
-	grn_rc rc;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &encoding) == FAILURE) {
-		return;
-	}
-
-	PRN_MUTEX_LOCK();
-	rc = grn_set_default_encoding((grn_encoding)encoding);
-	PRN_MUTEX_UNLOCK();
-
-	RETURN_LONG((long)rc);
-}
-
-/* }}} */
 /* {{{ grn_get_default_command_version() */
 
 static PHP_FUNCTION(grn_get_default_command_version)
@@ -746,25 +984,6 @@ static PHP_FUNCTION(grn_get_default_command_version)
 	PRN_MUTEX_UNLOCK();
 
 	RETURN_LONG((long)version);
-}
-
-/* }}} */
-/* {{{ grn_set_default_command_version() */
-
-static PHP_FUNCTION(grn_set_default_command_version)
-{
-	long version = 0L;
-	grn_rc rc;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &version) == FAILURE) {
-		return;
-	}
-
-	PRN_MUTEX_LOCK();
-	rc = grn_set_default_command_version((grn_command_version)version);
-	PRN_MUTEX_UNLOCK();
-
-	RETURN_LONG((long)rc);
 }
 
 /* }}} */
@@ -787,25 +1006,6 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold)
 	} else {
 		RETURN_DOUBLE((double)threshold);
 	}
-}
-
-/* }}} */
-/* {{{ grn_set_default_match_escalation_threshold() */
-
-static PHP_FUNCTION(grn_set_default_match_escalation_threshold)
-{
-	long threshold = 0L;
-	grn_rc rc;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &threshold) == FAILURE) {
-		return;
-	}
-
-	PRN_MUTEX_LOCK();
-	rc = grn_set_default_match_escalation_threshold((long long int)threshold);
-	PRN_MUTEX_UNLOCK();
-
-	RETURN_LONG((long)rc);
 }
 
 /* }}} */

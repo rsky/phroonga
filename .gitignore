@@ -11,6 +11,7 @@
 *.bundle
 *.la
 *.lo
+*.loT
 
 # Numerous always-ignore extensions
 ###################

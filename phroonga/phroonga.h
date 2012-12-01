@@ -33,6 +33,9 @@ ZEND_BEGIN_MODULE_GLOBALS(phroonga)
 	grn_command_version default_command_version;
 	long long int       default_match_escalation_threshold;
 	grn_log_level       default_logger_max_level;
+	TsHashTable         encodings_ht;
+	TsHashTable         command_versions_ht;
+	TsHashTable         log_levels_ht;
 #ifdef ZTS
 	MUTEX_T mutexp;
 #endif

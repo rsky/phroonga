@@ -27,22 +27,6 @@ PRN_FUNCTION(grn_default_logger_get_max_level)
 }
 
 /* }}} */
-/* {{{ grn_default_logger_set_max_level() */
-
-PRN_FUNCTION(grn_default_logger_set_max_level)
-{
-	long level = 0L;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
-		return;
-	}
-
-	PRN_MUTEX_LOCK();
-	grn_default_logger_set_max_level((grn_log_level)level);
-	PRN_MUTEX_UNLOCK();
-}
-
-/* }}} */
 
 /*
  * Local variables:
