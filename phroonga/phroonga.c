@@ -86,10 +86,10 @@ static void prn_register_expr_flags(INIT_FUNC_ARGS);
 static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS);
 
 /* functions to handle ini entries */
-static ZEND_INI_MH(prn_update_default_encoding);
-static ZEND_INI_MH(prn_update_default_command_version);
-static ZEND_INI_MH(prn_update_default_match_escalation_threshold);
-static ZEND_INI_MH(prn_update_default_logger_set_max_level);
+static PHP_INI_MH(prn_update_default_encoding);
+static PHP_INI_MH(prn_update_default_command_version);
+static PHP_INI_MH(prn_update_default_match_escalation_threshold);
+static PHP_INI_MH(prn_update_default_logger_set_max_level);
 static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC);
 static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC);
 static void prn_init_log_levels_ht(TsHashTable *ht TSRMLS_DC);
@@ -705,7 +705,7 @@ static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS)
 /* {{{ ini handlers */
 
 
-static ZEND_INI_MH(prn_update_default_encoding)
+static PHP_INI_MH(prn_update_default_encoding)
 {
 	TsHashTable *ht = &PRNG(encodings_ht);
 	grn_encoding encoding = GRN_ENC_DEFAULT;
@@ -733,7 +733,7 @@ static ZEND_INI_MH(prn_update_default_encoding)
 	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
 }
 
-static ZEND_INI_MH(prn_update_default_command_version)
+static PHP_INI_MH(prn_update_default_command_version)
 {
 	TsHashTable *ht = &PRNG(command_versions_ht);
 	grn_command_version version = GRN_COMMAND_VERSION_DEFAULT;
@@ -761,7 +761,7 @@ static ZEND_INI_MH(prn_update_default_command_version)
 	return OnUpdateStringUnempty(PRN_INI_MH_ARGS_PASSTHRU);
 }
 
-static ZEND_INI_MH(prn_update_default_match_escalation_threshold)
+static PHP_INI_MH(prn_update_default_match_escalation_threshold)
 {
 	long threshold;
 	grn_rc rc;
@@ -782,7 +782,7 @@ static ZEND_INI_MH(prn_update_default_match_escalation_threshold)
 	return OnUpdateLongGEZero(PRN_INI_MH_ARGS_PASSTHRU);
 }
 
-static ZEND_INI_MH(prn_update_default_logger_set_max_level)
+static PHP_INI_MH(prn_update_default_logger_set_max_level)
 {
 	TsHashTable *ht = &PRNG(log_levels_ht);
 	grn_log_level level = GRN_LOG_DEFAULT_LEVEL;
