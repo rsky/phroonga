@@ -88,9 +88,9 @@ static PHP_INI_MH(prn_update_default_encoding);
 static PHP_INI_MH(prn_update_default_command_version);
 static PHP_INI_MH(prn_update_default_match_escalation_threshold);
 static PHP_INI_MH(prn_update_default_logger_set_max_level);
-static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC);
-static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC);
-static void prn_init_log_levels_ht(TsHashTable *ht TSRMLS_DC);
+static void prn_init_encodings_ht(TsHashTable *ht);
+static void prn_init_command_versions_ht(TsHashTable *ht);
+static void prn_init_log_levels_ht(TsHashTable *ht);
 static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value);
 static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue);
 
@@ -249,9 +249,9 @@ static PHP_GINIT_FUNCTION(phroonga)
 	phroonga_globals->command_versions_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 	phroonga_globals->log_levels_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 
-	prn_init_encodings_ht(phroonga_globals->encodings_ht TSRMLS_CC);
-	prn_init_command_versions_ht(phroonga_globals->command_versions_ht TSRMLS_CC);
-	prn_init_log_levels_ht(phroonga_globals->log_levels_ht TSRMLS_CC);
+	prn_init_encodings_ht(phroonga_globals->encodings_ht );
+	prn_init_command_versions_ht(phroonga_globals->command_versions_ht);
+	prn_init_log_levels_ht(phroonga_globals->log_levels_ht);
 
 #ifdef ZTS
 	phroonga_globals->mutexp = tsrm_mutex_alloc();
@@ -799,7 +799,7 @@ static PHP_INI_MH(prn_update_default_logger_set_max_level)
 /* }}} */
 /* {{{ global hash table initializers */
 
-static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC)
+static void prn_init_encodings_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
 
@@ -825,7 +825,7 @@ static void prn_init_encodings_ht(TsHashTable *ht TSRMLS_DC)
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_KOI8R, "koi8-r");
 }
 
-static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC)
+static void prn_init_command_versions_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
 
@@ -842,7 +842,7 @@ static void prn_init_command_versions_ht(TsHashTable *ht TSRMLS_DC)
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_MAX, "max");
 }
 
-static void prn_init_log_levels_ht(TsHashTable *ht TSRMLS_DC)
+static void prn_init_log_levels_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 64, NULL, NULL, 1);
 
