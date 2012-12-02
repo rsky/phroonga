@@ -242,6 +242,10 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga)
 
 static PHP_RINIT_FUNCTION(phroonga)
 {
+	if (zend_hash_init(&PRNG(objects_ht), 32, NULL, NULL, 0) == FAILURE) {
+		return FAILURE;
+	}
+
 	return SUCCESS;
 }
 
@@ -250,6 +254,8 @@ static PHP_RINIT_FUNCTION(phroonga)
 
 static PHP_RSHUTDOWN_FUNCTION(phroonga)
 {
+	zend_hash_destroy(&PRNG(objects_ht));
+
 	return SUCCESS;
 }
 
@@ -273,6 +279,8 @@ static PHP_MINFO_FUNCTION(phroonga)
 
 static PHP_GINIT_FUNCTION(phroonga)
 {
+	memset(phroonga_globals, 0, sizeof(zend_phroonga_globals));
+
 	phroonga_globals->encodings_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 	phroonga_globals->command_versions_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 	phroonga_globals->log_levels_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);

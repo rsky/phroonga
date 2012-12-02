@@ -34,6 +34,7 @@ ZEND_BEGIN_MODULE_GLOBALS(phroonga)
 	TsHashTable *encodings_ht;
 	TsHashTable *command_versions_ht;
 	TsHashTable *log_levels_ht;
+	HashTable objects_ht;
 #ifdef ZTS
 	MUTEX_T mutexp;
 #endif

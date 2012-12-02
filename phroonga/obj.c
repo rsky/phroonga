@@ -74,6 +74,16 @@ static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
 	prn_obj *pobj = (prn_obj *)rsrc->ptr;
 
+	/* delete from object counter table */
+	if (sizeof(ulong) == sizeof(uintptr_t)) {
+		uintptr_t h = (uintptr_t)pobj->obj;
+		zend_hash_index_del(&PRNG(objects_ht), (ulong)h);
+	} else {
+		char arKey[32];
+		uint nKeyLength = (uint)snprintf(arKey, 32, "%p", pobj->obj);
+		zend_hash_del(&PRNG(objects_ht), arKey, nKeyLength);
+	}
+
 	grn_obj_unlink(pobj->ctx, pobj->obj);
 	zend_list_delete(pobj->ctx_id);
 	efree(rsrc->ptr);
@@ -86,12 +96,39 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 {
 	prn_obj *pobj;
 	zval *retval;
+	int obj_id = 0;
+	zend_bool addref = 0;
+
+	HashTable *ht = &PRNG(objects_ht);
+	char arKey[32] = {'\0'};
+	uint nKeyLength = 0;
+	ulong h = 0UL;
+	int *pData = NULL;
 
 	if (zv) {
 		zval_dtor(zv);
 		retval = zv;
 	} else {
 		MAKE_STD_ZVAL(retval);
+	}
+
+	/* find from object counter table */
+	if (sizeof(ulong) == sizeof(uintptr_t)) {
+		h = (ulong)((uintptr_t)obj);
+	} else {
+		nKeyLength = (uint)snprintf(arKey, 32, "%p", obj);
+	}
+	if (zend_hash_quick_find(ht, arKey, nKeyLength, h, (void **)&pData) == SUCCESS) {
+		obj_id = *pData;
+		addref = 1;
+	}
+
+	/* increment object reference count */
+	if (addref) {
+		zend_list_addref(obj_id);
+		ZVAL_RESOURCE(retval, (long)obj_id);
+
+		return retval;
 	}
 
 	pobj = (prn_obj *)emalloc(sizeof(prn_obj));
@@ -101,6 +138,11 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 
 	ZEND_REGISTER_RESOURCE(retval, pobj, le_grn_obj);
 	zend_list_addref(ctx_id);
+
+	/* add to object counter table */
+	obj_id = (int)Z_LVAL_P(retval);
+	pData = &obj_id;
+	zend_hash_quick_update(ht, arKey, nKeyLength, h, (void *)pData, sizeof(int), NULL);
 
 	return retval;
 }
