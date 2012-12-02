@@ -79,9 +79,9 @@ if test "$PHP_PHROONGA" != "no"; then
   dnl
   AC_MSG_CHECKING([for groonga version])
   GROONGA_VERSION_ID=`echo "$GROONGA_VERSION" | "$AWK" -F. '{ printf "%d", $1 * 1000000 + $2 * 1000 + $3 }'`
-  if test "$GROONGA_VERSION_ID" -lt 2000000; then
+  if test "$GROONGA_VERSION_ID" -lt 2000009; then
     AC_MSG_RESULT([$GROONGA_VERSION])
-    AC_MSG_ERROR([groonga version 2.0.0 or later is required to compile php with groonga support])
+    AC_MSG_ERROR([groonga version 2.0.9 or later is required to compile php with groonga support])
   fi
 
   AC_DEFINE_UNQUOTED(PRN_GROONGA_VERSION_ID, $GROONGA_VERSION_ID, [groonga library version number])
