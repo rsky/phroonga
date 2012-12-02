@@ -1,12 +1,12 @@
 --TEST--
-grn_ctx_get_command_version() function returns 1
+grn_ctx_get_command_version() function returns the stable version
 --INI--
-phroonga.default_command_version = GRN_COMMAND_VERSION_2
+phroonga.default_command_version = GRN_COMMAND_VERSION_MAX
 --FILE--
 <?php
 $ctx = grn_ctx_open();
 $version = grn_ctx_get_command_version($ctx);
-if ($version === GRN_COMMAND_VERSION_1) {
+if ($version === GRN_COMMAND_VERSION_STABLE) {
     echo 'OK';
 } else {
     echo "NG: {$version}";
