@@ -13,7 +13,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
- 
+
 #include <php.h>
 #include <groonga.h>
 
@@ -27,6 +27,8 @@
 #define PRN_FUNCTION(name) PRN_LOCAL PHP_FUNCTION(name)
 
 BEGIN_EXTERN_C()
+
+/* {{{ module globals */
 
 ZEND_BEGIN_MODULE_GLOBALS(phroonga)
 	TsHashTable *encodings_ht;
@@ -48,6 +50,17 @@ ZEND_EXTERN_MODULE_GLOBALS(phroonga)
 #define PRN_MUTEX_LOCK()
 #define PRN_MUTEX_UNLOCK()
 #endif
+
+/* }}} */
+/* {{{ resource API */
+
+PHPAPI int prn_get_le_ctx(void);
+PHPAPI grn_ctx *prn_fetch_ctx(zval *zv TSRMLS_DC);
+
+PHPAPI int prn_get_le_obj(void);
+PHPAPI grn_obj *prn_fetch_obj(zval *zv TSRMLS_DC);
+
+/* }}} */
 
 END_EXTERN_C()
 

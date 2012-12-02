@@ -135,6 +135,14 @@ static PHP_MINIT_FUNCTION(phroonga)
 
 	prn_register_constants(INIT_FUNC_ARGS_PASSTHRU);
 
+	if (prn_register_ctx(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+
+	if (prn_register_obj(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+
 	return SUCCESS;
 }
 
