@@ -11,7 +11,6 @@
 *.bundle
 *.la
 *.lo
-*.loT
 
 # Numerous always-ignore extensions
 ###################
@@ -23,14 +22,16 @@
 *.swo
 *.swp
 *.vi
+*.loT
 *~
-
 *.sass-cache
+
 # Folders to ignore
 ###################
 .hg
 .svn
 .CVS
+
 # OS or Editor folders
 ###################
 .DS_Store
@@ -45,10 +46,12 @@ nbproject
 *.esproj
 *.sublime-project
 *.sublime-workspace
+
 # Dreamweaver added files
 ###################
 _notes
 dwsync.xml
+
 # Komodo
 ###################
 *.komodoproject
