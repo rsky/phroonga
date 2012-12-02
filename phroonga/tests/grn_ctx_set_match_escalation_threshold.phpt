@@ -4,7 +4,7 @@ grn_ctx_set_match_escalation_threshold() function
 phroonga.default_match_escalation_threshold = 1000
 --FILE--
 <?php
-$ctx = grn_ctx_open();
+$ctx = grn_ctx_open(GRN_CTX_USE_QL);
 grn_ctx_set_match_escalation_threshold($ctx, 100);
 echo grn_ctx_get_match_escalation_threshold($ctx);
 ?>

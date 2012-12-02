@@ -16,6 +16,7 @@
 
 PRN_LOCAL int prn_register_ctx(INIT_FUNC_ARGS);
 PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC);
+PRN_LOCAL zend_bool prn_ctx_check_use_ql(grn_ctx *ctx TSRMLS_DC);
 
 /* }}} */
 /* {{{ PHP function prototypes */

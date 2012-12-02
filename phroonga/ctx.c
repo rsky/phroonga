@@ -83,6 +83,21 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 }
 
 /* }}} */
+/* {{{ prn_ctx_check_use_ql() */
+
+PRN_LOCAL zend_bool prn_ctx_check_use_ql(grn_ctx *ctx TSRMLS_DC)
+{
+	if (ctx->flags & GRN_CTX_USE_QL) {
+		return 1;
+	}
+
+	php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		"context is not configured to use QL-API");
+
+	return 0;
+}
+
+/* }}} */
 /* {{{ grn_ctx_open() */
 
 PRN_FUNCTION(grn_ctx_open)
@@ -95,15 +110,11 @@ PRN_FUNCTION(grn_ctx_open)
 		return;
 	}
 
-	/* set GRN_CTX_USE_QL so as to invoke grn_ctx_impl_init() */
-	actual_flags = (int)flags;
-	ctx = grn_ctx_open(actual_flags | GRN_CTX_USE_QL);
-	/* ctx = grn_ctx_open((int)flags); */
+	ctx = grn_ctx_open((int)flags);
 	if (!ctx) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to open context");
 		RETURN_NULL();
 	}
-	ctx->flags = actual_flags;
 
 	prn_ctx_zval(ctx, return_value TSRMLS_CC);
 }
@@ -200,10 +211,14 @@ PRN_FUNCTION(grn_ctx_set_command_version)
 		RETURN_FALSE;
 	}
 
+	if (!prn_ctx_check_use_ql(ctx TSRMLS_CC)) {
+		RETURN_FALSE;
+	}
+
 	rc = grn_ctx_set_command_version(ctx, (grn_command_version)version);
 	if (rc != GRN_SUCCESS) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
-			"failed to set command version: %d: %s", rc, ctx->errbuf);
+			"failed to set command version: %s", prn_errstr(rc));
 		RETURN_FALSE;
 	}
 
@@ -256,10 +271,14 @@ PRN_FUNCTION(grn_ctx_set_match_escalation_threshold)
 		RETURN_FALSE;
 	}
 
+	if (!prn_ctx_check_use_ql(ctx TSRMLS_CC)) {
+		RETURN_FALSE;
+	}
+
 	rc = grn_ctx_set_match_escalation_threshold(ctx, (long long int)threshold);
 	if (rc != GRN_SUCCESS) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
-			"failed to set threshold: %d: %s", rc, ctx->errbuf);
+			"failed to set threshold: %s", prn_errstr(rc));
 		RETURN_FALSE;
 	}
 
