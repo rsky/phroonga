@@ -27,7 +27,7 @@
 PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
 
 /* }}} */
-/* {{{ function prototypes (module) */
+/* {{{ module function prototypes */
 
 static PHP_MINIT_FUNCTION(phroonga);
 static PHP_MSHUTDOWN_FUNCTION(phroonga);
@@ -38,7 +38,7 @@ static PHP_GINIT_FUNCTION(phroonga);
 static PHP_GSHUTDOWN_FUNCTION(phroonga);
 
 /* }}} */
-/* {{{ function prototypes (PHP) */
+/* {{{ PHP function prototypes */
 
 static PRN_FUNCTION(phroonga_obj_ctx);
 static PRN_FUNCTION(phroonga_obj_type_name);
@@ -212,11 +212,11 @@ static PHP_MINIT_FUNCTION(phroonga)
 
 	prn_register_constants(INIT_FUNC_ARGS_PASSTHRU);
 
-	if (prn_register_ctx(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+	if (prn_ctx_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
 		return FAILURE;
 	}
 
-	if (prn_register_obj(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+	if (prn_obj_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -242,7 +242,8 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga)
 
 static PHP_RINIT_FUNCTION(phroonga)
 {
-	if (zend_hash_init(&PRNG(objects_ht), 32, NULL, NULL, 0) == FAILURE) {
+	PRNG(resources_ht) = (HashTable *)emalloc(sizeof(HashTable));
+	if (zend_hash_init(PRNG(resources_ht), 32, NULL, NULL, 0) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -254,7 +255,9 @@ static PHP_RINIT_FUNCTION(phroonga)
 
 static PHP_RSHUTDOWN_FUNCTION(phroonga)
 {
-	zend_hash_destroy(&PRNG(objects_ht));
+	zend_hash_destroy(PRNG(resources_ht));
+	efree(PRNG(resources_ht));
+	PRNG(resources_ht) = NULL;
 
 	return SUCCESS;
 }
@@ -285,9 +288,9 @@ static PHP_GINIT_FUNCTION(phroonga)
 	phroonga_globals->command_versions_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 	phroonga_globals->log_levels_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
 
-	prn_init_encodings_ht(phroonga_globals->encodings_ht );
-	prn_init_command_versions_ht(phroonga_globals->command_versions_ht);
-	prn_init_log_levels_ht(phroonga_globals->log_levels_ht);
+	prn_setup_encodings_ht(phroonga_globals->encodings_ht );
+	prn_setup_command_versions_ht(phroonga_globals->command_versions_ht);
+	prn_setup_log_levels_ht(phroonga_globals->log_levels_ht);
 
 #ifdef ZTS
 	phroonga_globals->mutexp = tsrm_mutex_alloc();
@@ -416,7 +419,7 @@ static PRN_FUNCTION(phroonga_obj_ctx)
 		return;
 	}
 
-	pobj = prn_fetch_obj_internal(zobj TSRMLS_CC);
+	pobj = prn_obj_fetch_internal(zobj TSRMLS_CC);
 	if (!pobj) {
 		return;
 	}
@@ -441,7 +444,7 @@ static PRN_FUNCTION(phroonga_obj_type_name)
 		return;
 	}
 
-	obj = prn_fetch_obj(zobj TSRMLS_CC);
+	obj = prn_obj_fetch(zobj TSRMLS_CC);
 	if (!obj) {
 		return;
 	}

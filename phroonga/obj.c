@@ -7,13 +7,11 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "obj.h"
-
-/* {{{ globals */
-
+#define PRN_LE_GRN_OBJ le_grn_obj
 static int le_grn_obj;
 
-/* }}} */
+#include "obj.h"
+
 /* {{{ function prototypes*/
 
 static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC);
@@ -27,11 +25,11 @@ PHPAPI int prn_get_le_obj(void)
 }
 
 /* }}} */
-/* {{{ prn_fetch_obj() */
+/* {{{ prn_obj_fetch() */
 
-PHPAPI grn_obj *prn_fetch_obj(zval *zv TSRMLS_DC)
+PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC)
 {
-	prn_obj *pobj = prn_fetch_obj_internal(zv TSRMLS_CC);
+	prn_obj *pobj = prn_obj_fetch_internal(zv TSRMLS_CC);
 
 	if (pobj) {
 		return pobj->obj;
@@ -41,24 +39,12 @@ PHPAPI grn_obj *prn_fetch_obj(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_fetch_obj_internal() */
+/* {{{ prn_obj_startup() */
 
-PRN_LOCAL prn_obj *prn_fetch_obj_internal(zval *zv TSRMLS_DC)
-{
-	prn_obj *pobj;
-
-	ZEND_FETCH_RESOURCE_NO_RETURN(pobj, prn_obj *, &zv, -1, "grn_obj", le_grn_obj);
-
-	return pobj;
-}
-
-/* }}} */
-/* {{{ prn_register_obj() */
-
-PRN_LOCAL int prn_register_obj(INIT_FUNC_ARGS)
+PRN_LOCAL int prn_obj_startup(INIT_FUNC_ARGS)
 {
 	int resource_id = zend_register_list_destructors_ex(
-		prn_free_obj, NULL, "grn_obj", module_number);
+		prn_resource_dtor, NULL, "grn_obj", module_number);
 	if (resource_id == FAILURE) {
 		return FAILURE;
 	}
@@ -68,83 +54,17 @@ PRN_LOCAL int prn_register_obj(INIT_FUNC_ARGS)
 }
 
 /* }}} */
-/* {{{ prn_free_obj() */
+/* {{{ prn_obj_unlink() */
 
-static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+PRN_LOCAL grn_rc prn_obj_unlink(grn_ctx *ctx, grn_obj *obj)
 {
-	prn_obj *pobj = (prn_obj *)rsrc->ptr;
+	grn_obj_unlink(ctx, obj);
 
-	/* delete from object counter table */
-	if (sizeof(ulong) >= sizeof(uintptr_t)) {
-		zend_hash_index_del(&PRNG(objects_ht), (ulong)((uintptr_t)pobj->obj));
-	} else {
-		char arKey[40] = {'\0'};
-		uint nKeyLength = (uint)snprintf(arKey, sizeof(arKey), "%p", pobj->obj);
-		zend_hash_del(&PRNG(objects_ht), arKey, nKeyLength);
-	}
-
-	grn_obj_unlink(pobj->ctx, pobj->obj);
-	zend_list_delete(pobj->ctx_id);
-	efree(rsrc->ptr);
+	return GRN_SUCCESS;
 }
 
 /* }}} */
-/* {{{ prn_obj_zval() */
-
-PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TSRMLS_DC)
-{
-	prn_obj *pobj;
-	zval *retval;
-	int obj_id = 0;
-
-	HashTable *ht = &PRNG(objects_ht);
-	char arKey[40] = {'\0'};
-	uint nKeyLength = 0;
-	ulong h = 0UL;
-	int *pData = NULL;
-
-	if (zv) {
-		zval_dtor(zv);
-		retval = zv;
-	} else {
-		MAKE_STD_ZVAL(retval);
-	}
-
-	/* find from object counter table */
-	if (sizeof(ulong) >= sizeof(uintptr_t)) {
-		h = (ulong)((uintptr_t)obj);
-	} else {
-		nKeyLength = (uint)snprintf(arKey, sizeof(arKey), "%p", obj);
-	}
-
-	if (zend_hash_quick_find(ht, arKey, nKeyLength, h, (void **)&pData) == SUCCESS) {
-		/* increment reference count and return */
-		obj_id = *pData;
-		zend_list_addref(obj_id);
-		ZVAL_RESOURCE(retval, (long)obj_id);
-
-		return retval;
-	}
-
-	/* create new resource and register it */
-	pobj = (prn_obj *)emalloc(sizeof(prn_obj));
-	pobj->ctx_id = ctx_id;
-	pobj->ctx = ctx;
-	pobj->obj = obj;
-
-	ZEND_REGISTER_RESOURCE(retval, pobj, le_grn_obj);
-	zend_list_addref(ctx_id);
-
-	/* add to object counter table */
-	obj_id = (int)Z_LVAL_P(retval);
-	pData = &obj_id;
-	zend_hash_quick_update(ht, arKey, nKeyLength, h, (void *)pData, sizeof(int), NULL);
-
-	return retval;
-}
-
-/* }}} */
-/* {{{ prn_obj_type_name */
+/* {{{ prn_obj_type_name() */
 
 PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 {
@@ -207,7 +127,7 @@ PRN_FUNCTION(grn_db_open)
 		return;
 	}
 
-	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
 	if (!ctx) {
 		return;
 	}
@@ -241,7 +161,7 @@ PRN_FUNCTION(grn_db_touch)
 		return;
 	}
 
-	pobj = prn_fetch_obj_internal(zdb TSRMLS_CC);
+	pobj = prn_obj_fetch_internal(zdb TSRMLS_CC);
 	if (!pobj->obj || pobj->obj->header.type != GRN_DB) {
 		return;
 	}
@@ -267,7 +187,7 @@ PRN_FUNCTION(grn_ctx_use)
 		return;
 	}
 
-	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
 	if (!ctx) {
 		return;
 	}
@@ -278,7 +198,7 @@ PRN_FUNCTION(grn_ctx_use)
 	}
 
 	if (zdb) {
-		pobj = prn_fetch_obj_internal(zdb TSRMLS_CC);
+		pobj = prn_obj_fetch_internal(zdb TSRMLS_CC);
 		if (!pobj) {
 			return;
 		}
@@ -320,7 +240,7 @@ PRN_FUNCTION(grn_ctx_db)
 		return;
 	}
 
-	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
 	if (!ctx) {
 		return;
 	}
@@ -352,7 +272,7 @@ PRN_FUNCTION(grn_ctx_get)
 		return;
 	}
 
-	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
 	if (!ctx) {
 		return;
 	}
@@ -381,7 +301,7 @@ PRN_FUNCTION(grn_ctx_at)
 		return;
 	}
 
-	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
 	if (!ctx) {
 		return;
 	}

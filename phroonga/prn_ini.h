@@ -14,14 +14,21 @@
 
 BEGIN_EXTERN_C()
 
+/* {{{ ini modification handler prototypes */
+
 PRN_LOCAL PHP_INI_MH(prn_update_default_encoding);
 PRN_LOCAL PHP_INI_MH(prn_update_default_command_version);
 PRN_LOCAL PHP_INI_MH(prn_update_default_match_escalation_threshold);
 PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level);
 
-PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht);
-PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht);
-PRN_LOCAL void prn_init_log_levels_ht(TsHashTable *ht);
+/* }}} */
+/* {{{ internal function prototypes */
+
+PRN_LOCAL void prn_setup_encodings_ht(TsHashTable *ht);
+PRN_LOCAL void prn_setup_command_versions_ht(TsHashTable *ht);
+PRN_LOCAL void prn_setup_log_levels_ht(TsHashTable *ht);
+
+/* }}} */
 
 END_EXTERN_C()
 

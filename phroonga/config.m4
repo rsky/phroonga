@@ -109,7 +109,7 @@ if test "$PHP_PHROONGA" != "no"; then
       $GROONGA_LIBLINE
     ])
 
-  PHROONGA_SOURCES="phroonga.c prn_constants.c prn_ini.c"
+  PHROONGA_SOURCES="phroonga.c prn_constants.c prn_ini.c prn_resource.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES ctx.c obj.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES geo.c log.c expr.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES hash.c array.c pat.c dat.c"

@@ -34,7 +34,7 @@ ZEND_BEGIN_MODULE_GLOBALS(phroonga)
 	TsHashTable *encodings_ht;
 	TsHashTable *command_versions_ht;
 	TsHashTable *log_levels_ht;
-	HashTable objects_ht;
+	HashTable *resources_ht;
 #ifdef ZTS
 	MUTEX_T mutexp;
 #endif
@@ -56,10 +56,10 @@ ZEND_EXTERN_MODULE_GLOBALS(phroonga)
 /* {{{ resource API */
 
 PHPAPI int prn_get_le_ctx(void);
-PHPAPI grn_ctx *prn_fetch_ctx(zval *zv TSRMLS_DC);
+PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC);
 
 PHPAPI int prn_get_le_obj(void);
-PHPAPI grn_obj *prn_fetch_obj(zval *zv TSRMLS_DC);
+PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC);
 
 /* }}} */
 /* {{{ miscellanous API */

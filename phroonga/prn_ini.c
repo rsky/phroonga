@@ -140,9 +140,9 @@ PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level)
 }
 
 /* }}} */
-/* {{{ prn_init_encodings_ht() */
+/* {{{ prn_setup_encodings_ht() */
 
-PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht)
+PRN_LOCAL void prn_setup_encodings_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
 
@@ -173,9 +173,9 @@ PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht)
 }
 
 /* }}} */
-/* {{{ prn_init_command_versions_ht() */
+/* {{{ prn_setup_command_versions_ht() */
 
-PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht)
+PRN_LOCAL void prn_setup_command_versions_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 16, NULL, NULL, 1);
 
@@ -197,9 +197,9 @@ PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht)
 }
 
 /* }}} */
-/* {{{ prn_init_log_levels_ht() */
+/* {{{ prn_setup_log_levels_ht() */
 
-PRN_LOCAL void prn_init_log_levels_ht(TsHashTable *ht)
+PRN_LOCAL void prn_setup_log_levels_ht(TsHashTable *ht)
 {
 	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
 

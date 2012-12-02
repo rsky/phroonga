@@ -12,11 +12,14 @@
 #ifndef PHROONGA_CTX_H
 #define PHROONGA_CTX_H
 
+BEGIN_EXTERN_C()
+
 /* {{{ internal function prototypes */
 
-PRN_LOCAL int prn_register_ctx(INIT_FUNC_ARGS);
-PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC);
-PRN_LOCAL zend_bool prn_ctx_check_use_ql(grn_ctx *ctx TSRMLS_DC);
+PRN_LOCAL int prn_ctx_startup(INIT_FUNC_ARGS);
+PRN_LOCAL int prn_ctx_register(grn_ctx *ctx TSRMLS_DC);
+PRN_LOCAL zval *prn_ctx_zval(zval *zv, grn_ctx *ctx TSRMLS_DC);
+PRN_LOCAL zend_bool prn_ctx_check_impl(grn_ctx *ctx TSRMLS_DC);
 
 /* }}} */
 /* {{{ PHP function prototypes */
@@ -30,6 +33,8 @@ PRN_FUNCTION(grn_ctx_get_match_escalation_threshold);
 PRN_FUNCTION(grn_ctx_set_match_escalation_threshold);
 
 /* }}} */
+
+END_EXTERN_C()
 
 #endif
 
