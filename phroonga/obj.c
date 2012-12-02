@@ -202,6 +202,13 @@ PRN_FUNCTION(grn_ctx_use)
 		if (!pobj) {
 			return;
 		}
+
+		if (pobj->ctx_id != (int)Z_LVAL_P(zctx)) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING,
+				"the given database is not belongs to the given context");
+			return;
+		}
+
 		db = pobj->obj;
 	}
 
@@ -210,16 +217,6 @@ PRN_FUNCTION(grn_ctx_use)
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
 			"failed to use database: %s %s", prn_errstr(ctx->rc), ctx->errbuf);
 		return;
-	}
-
-	if (pobj) {
-		int ctx_id = (int)Z_LVAL_P(zctx);
-		if (ctx_id != pobj->ctx_id) {
-			zend_list_delete(pobj->ctx_id);
-			zend_list_addref(ctx_id);
-			pobj->ctx_id = ctx_id;
-			pobj->ctx = ctx;
-		}
 	}
 
 	RETURN_TRUE;
