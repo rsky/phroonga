@@ -78,8 +78,8 @@ static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	if (sizeof(ulong) >= sizeof(uintptr_t)) {
 		zend_hash_index_del(&PRNG(objects_ht), (ulong)((uintptr_t)pobj->obj));
 	} else {
-		char arKey[32] = {'\0'};
-		uint nKeyLength = (uint)snprintf(arKey, 32, "%p", pobj->obj);
+		char arKey[40] = {'\0'};
+		uint nKeyLength = (uint)snprintf(arKey, sizeof(arKey), "%p", pobj->obj);
 		zend_hash_del(&PRNG(objects_ht), arKey, nKeyLength);
 	}
 
@@ -98,7 +98,7 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 	int obj_id = 0;
 
 	HashTable *ht = &PRNG(objects_ht);
-	char arKey[32] = {'\0'};
+	char arKey[40] = {'\0'};
 	uint nKeyLength = 0;
 	ulong h = 0UL;
 	int *pData = NULL;
@@ -114,7 +114,7 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 	if (sizeof(ulong) >= sizeof(uintptr_t)) {
 		h = (ulong)((uintptr_t)obj);
 	} else {
-		nKeyLength = (uint)snprintf(arKey, 32, "%p", obj);
+		nKeyLength = (uint)snprintf(arKey, sizeof(arKey), "%p", obj);
 	}
 
 	if (zend_hash_quick_find(ht, arKey, nKeyLength, h, (void **)&pData) == SUCCESS) {

@@ -16,15 +16,15 @@
 #define PRN_INI_HASH_KEY_MAX_LENGTH (PRN_INI_HASH_KEY_BUF_SIZE - 1)
 
 #define PRN_INI_HASH_ADD(ht, value) \
-	prn_ini_non_ts_hash_add(TS_HASH(ht), #value, value)
+	prn_ini_non_ts_hash_add(TS_HASH(ht), #value, value, 1)
 
 #define PRN_INI_HASH_ADD_ALIAS(ht, value, alias) \
-	prn_ini_non_ts_hash_add(TS_HASH(ht), alias, value)
+	prn_ini_non_ts_hash_add(TS_HASH(ht), alias, value, 0)
 
 /* }}} */
 /* {{{ function prototypes */
 
-static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value);
+static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value, int index_add);
 static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue);
 
 /* }}} */
@@ -166,6 +166,10 @@ PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht)
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_LATIN1, "latin-1");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_KOI8R, "koi8r");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_ENC_KOI8R, "koi8-r");
+	/*
+	fprintf(stderr, "%s: %u/%u\n", __FUNCTION__,
+		ht->hash.nNumOfElements, ht->hash.nTableSize);
+	*/
 }
 
 /* }}} */
@@ -173,7 +177,7 @@ PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht)
 
 PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht)
 {
-	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
+	zend_ts_hash_init(ht, 16, NULL, NULL, 1);
 
 	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_DEFAULT);
 	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_1);
@@ -186,6 +190,10 @@ PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht)
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_MIN, "min");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_STABLE, "stable");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_COMMAND_VERSION_MAX, "max");
+	/*
+	fprintf(stderr, "%s: %u/%u\n", __FUNCTION__,
+		ht->hash.nNumOfElements, ht->hash.nTableSize);
+	*/
 }
 
 /* }}} */
@@ -193,7 +201,7 @@ PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht)
 
 PRN_LOCAL void prn_init_log_levels_ht(TsHashTable *ht)
 {
-	zend_ts_hash_init(ht, 64, NULL, NULL, 1);
+	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
 
 	PRN_INI_HASH_ADD(ht, GRN_LOG_NONE);
 	PRN_INI_HASH_ADD(ht, GRN_LOG_EMERG);
@@ -218,29 +226,35 @@ PRN_LOCAL void prn_init_log_levels_ht(TsHashTable *ht)
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DEBUG, "debug");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DUMP, "dump");
 	PRN_INI_HASH_ADD_ALIAS(ht, GRN_LOG_DEFAULT_LEVEL, "default");
+	/*
+	fprintf(stderr, "%s: %u/%u\n", __FUNCTION__,
+		ht->hash.nNumOfElements, ht->hash.nTableSize);
+	*/
 }
 
 /* }}} */
 /* {{{ prn_ini_non_ts_hash_add() */
 
-static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
+static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value, int index_add)
 {
 	char buf[PRN_INI_HASH_KEY_BUF_SIZE];
 	const char *arKey;
-	uint length;
-
-	length = (uint)strlen(key);
+	uint nKeyLength = (uint)strlen(key);
+	void *pData;
 
 	/* check for developing */
-	if (length > PRN_INI_HASH_KEY_MAX_LENGTH) {
-		zend_error(E_ERROR, "Too long key '%s' (%u)", key, length);
+	if (nKeyLength > PRN_INI_HASH_KEY_MAX_LENGTH) {
+		zend_error(E_ERROR, "too long key: %s", key);
 		return;
 	}
 
-	arKey = zend_str_tolower_copy(buf, key, length);
+	arKey = zend_str_tolower_copy(buf, key, nKeyLength);
+	pData = (void *)&value;
 
-	zend_hash_index_update(ht, (ulong)value, (void *)&value, sizeof(int), NULL);
-	zend_hash_update(ht, arKey, length + 1, (void *)&value, sizeof(int), NULL);
+	if (index_add) {
+		zend_hash_index_update(ht, (ulong)value, pData, sizeof(int), NULL);
+	}
+	zend_hash_update(ht, arKey, nKeyLength, pData, sizeof(int), NULL);
 }
 
 /* }}} */
@@ -258,7 +272,7 @@ static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint len
 
 	arKey = zend_str_tolower_dup(key, length);
 
-	if (zend_ts_hash_find(ht, arKey, length + 1, (void **)&pData) == SUCCESS) {
+	if (zend_ts_hash_find(ht, arKey, length, (void **)&pData) == SUCCESS) {
 		found = 1;
 		if (pValue) {
 			*pValue = *pData;

@@ -185,6 +185,7 @@ static void prn_register_enum_command_version(INIT_FUNC_ARGS)
 
 static void prn_register_enum_log_level(INIT_FUNC_ARGS)
 {
+	/* enum members */
 	PRN_REGISTER_CONSTANT(GRN_LOG_NONE);
 	PRN_REGISTER_CONSTANT(GRN_LOG_EMERG);
 	PRN_REGISTER_CONSTANT(GRN_LOG_ALERT);
@@ -195,6 +196,7 @@ static void prn_register_enum_log_level(INIT_FUNC_ARGS)
 	PRN_REGISTER_CONSTANT(GRN_LOG_INFO);
 	PRN_REGISTER_CONSTANT(GRN_LOG_DEBUG);
 	PRN_REGISTER_CONSTANT(GRN_LOG_DUMP);
+	/* aliases */
 	PRN_REGISTER_CONSTANT(GRN_LOG_DEFAULT_LEVEL);
 }
 
