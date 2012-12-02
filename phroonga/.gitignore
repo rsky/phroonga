@@ -12,4 +12,5 @@ libtool
 ltmain.sh
 missing
 mkinstalldirs
+php_test_results_*.txt
 run-tests.php

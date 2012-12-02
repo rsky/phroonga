@@ -87,7 +87,7 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 
 PRN_FUNCTION(grn_ctx_open)
 {
-	long flags = 0;
+	long flags = 0L;
 	grn_ctx *ctx;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &flags) == FAILURE) {
@@ -101,6 +101,164 @@ PRN_FUNCTION(grn_ctx_open)
 	}
 
 	prn_ctx_zval(ctx, return_value TSRMLS_CC);
+}
+
+/* }}} */
+/* {{{ grn_ctx_get_encoding() */
+
+PRN_FUNCTION(grn_ctx_get_encoding)
+{
+	zval *zctx = NULL;
+	grn_ctx *ctx;
+	grn_encoding encoding;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	encoding = GRN_CTX_GET_ENCODING(ctx);
+
+	RETURN_LONG((long)encoding);
+}
+
+/* }}} */
+/* {{{ grn_ctx_set_encoding() */
+
+PRN_FUNCTION(grn_ctx_set_encoding)
+{
+	zval *zctx = NULL;
+	long encoding = 0L;
+	grn_ctx *ctx;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &encoding) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	if (zend_ts_hash_index_exists(PRNG(encodings_ht), (ulong)encoding)) {
+		GRN_CTX_SET_ENCODING(ctx, (grn_encoding)encoding);
+		RETURN_TRUE;
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "invalid encoding: %ld", encoding);
+		RETURN_FALSE;
+	}
+}
+
+/* }}} */
+/* {{{ grn_ctx_get_command_version() */
+
+PRN_FUNCTION(grn_ctx_get_command_version)
+{
+	zval *zctx = NULL;
+	grn_ctx *ctx;
+	grn_command_version version;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	version = grn_ctx_get_command_version(ctx);
+
+	RETURN_LONG((long)version);
+}
+
+/* }}} */
+/* {{{ grn_ctx_set_command_version() */
+
+PRN_FUNCTION(grn_ctx_set_command_version)
+{
+	zval *zctx = NULL;
+	long version = 0L;
+	grn_ctx *ctx;
+	grn_rc rc;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &version) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	rc = grn_ctx_set_command_version(ctx, (grn_command_version)version);
+	if (rc != GRN_SUCCESS) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			"failed to set command version: %d: %s", rc, ctx->errbuf);
+		RETURN_FALSE;
+	}
+
+	RETURN_TRUE;
+}
+
+/* }}} */
+/* {{{ grn_ctx_get_match_escalation_threshold() */
+
+PRN_FUNCTION(grn_ctx_get_match_escalation_threshold)
+{
+	zval *zctx = NULL;
+	grn_ctx *ctx;
+	long long int threshold;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	threshold = grn_ctx_get_match_escalation_threshold(ctx);
+
+	if (LONG_MIN <= threshold && threshold <= LONG_MAX) {
+		RETURN_LONG((long)threshold);
+	} else {
+		RETURN_DOUBLE((double)threshold);
+	}
+}
+
+/* }}} */
+/* {{{ grn_ctx_set_match_escalation_threshold() */
+
+PRN_FUNCTION(grn_ctx_set_match_escalation_threshold)
+{
+	zval *zctx = NULL;
+	long threshold = 0L;
+	grn_ctx *ctx;
+	grn_rc rc;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &threshold) == FAILURE) {
+		return;
+	}
+
+	ctx = prn_fetch_ctx(zctx TSRMLS_CC);
+	if (!ctx) {
+		RETURN_FALSE;
+	}
+
+	rc = grn_ctx_set_match_escalation_threshold(ctx, (long long int)threshold);
+	if (rc != GRN_SUCCESS) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			"failed to set threshold: %d: %s", rc, ctx->errbuf);
+		RETURN_FALSE;
+	}
+
+	RETURN_TRUE;
 }
 
 /* }}} */

@@ -21,6 +21,12 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC);
 /* {{{ PHP function prototypes */
 
 PRN_FUNCTION(grn_ctx_open);
+PRN_FUNCTION(grn_ctx_get_encoding);
+PRN_FUNCTION(grn_ctx_set_encoding);
+PRN_FUNCTION(grn_ctx_get_command_version);
+PRN_FUNCTION(grn_ctx_set_command_version);
+PRN_FUNCTION(grn_ctx_get_match_escalation_threshold);
+PRN_FUNCTION(grn_ctx_set_match_escalation_threshold);
 
 /* }}} */
 

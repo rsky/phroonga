@@ -52,8 +52,27 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold);
 /* }}} */
 /* {{{ argument informations (ctx) */
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_common, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, ctx)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, flags)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_set_encoding, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, encoding)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_set_command_version, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, version)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_set_match_escalation_threshold, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, threshold)
 ZEND_END_ARG_INFO()
 
 /* }}} */
@@ -70,6 +89,12 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_get_default_match_escalation_threshold, NULL)
 	/* ctx */
 	PHP_FE(grn_ctx_open, arginfo_ctx_open)
+	PHP_FE(grn_ctx_get_encoding, arginfo_ctx_common)
+	PHP_FE(grn_ctx_set_encoding, arginfo_ctx_set_encoding)
+	PHP_FE(grn_ctx_get_command_version, arginfo_ctx_common)
+	PHP_FE(grn_ctx_set_command_version, arginfo_ctx_set_command_version)
+	PHP_FE(grn_ctx_get_match_escalation_threshold, arginfo_ctx_common)
+	PHP_FE(grn_ctx_set_match_escalation_threshold, arginfo_ctx_set_match_escalation_threshold)
 	/* obj */
 	/* geo */
 	/* log */
