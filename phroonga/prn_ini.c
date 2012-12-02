@@ -228,12 +228,13 @@ static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
 	const char *arKey;
 	uint length;
 
-	zend_hash_index_update(ht, (ulong)value, &value, sizeof(int), NULL);
+	zend_hash_index_update(ht, (ulong)value, (void *)&value, sizeof(int), NULL);
 
 	length = (uint)strlen(key);
 	if (length >= PRN_INI_HASH_KEY_MAX_SIZE) {
 		length = PRN_INI_HASH_KEY_MAX_SIZE - 1;
 	}
+
 	arKey = zend_str_tolower_copy(buf, key, length);
 	zend_hash_update(ht, arKey, length + 1, (void *)&value, sizeof(int), NULL);
 }
@@ -249,13 +250,12 @@ static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint len
 
 	if (zend_ts_hash_find(ht, arKey, length + 1, (void **)&pData) == SUCCESS) {
 		found = 1;
+		if (pValue) {
+			*pValue = *pData;
+		}
 	}
 
 	efree(arKey);
-
-	if (found && pValue) {
-		*pValue = *pData;
-	}
 
 	return found;
 }
