@@ -12,7 +12,8 @@
 
 /* {{{ macros */
 
-#define PRN_INI_HASH_KEY_MAX_SIZE 32
+#define PRN_INI_HASH_KEY_BUF_SIZE 32
+#define PRN_INI_HASH_KEY_MAX_LENGTH (PRN_INI_HASH_KEY_BUF_SIZE - 1)
 
 #define PRN_INI_HASH_ADD(ht, value) \
 	prn_ini_non_ts_hash_add(TS_HASH(ht), #value, value)
@@ -224,18 +225,21 @@ PRN_LOCAL void prn_init_log_levels_ht(TsHashTable *ht)
 
 static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
 {
-	char buf[PRN_INI_HASH_KEY_MAX_SIZE];
+	char buf[PRN_INI_HASH_KEY_BUF_SIZE];
 	const char *arKey;
 	uint length;
 
-	zend_hash_index_update(ht, (ulong)value, (void *)&value, sizeof(int), NULL);
-
 	length = (uint)strlen(key);
-	if (length >= PRN_INI_HASH_KEY_MAX_SIZE) {
-		length = PRN_INI_HASH_KEY_MAX_SIZE - 1;
+
+	/* check for developing */
+	if (length > PRN_INI_HASH_KEY_MAX_LENGTH) {
+		zend_error(E_ERROR, "Too long key '%s' (%u)", key, length);
+		return;
 	}
 
 	arKey = zend_str_tolower_copy(buf, key, length);
+
+	zend_hash_index_update(ht, (ulong)value, (void *)&value, sizeof(int), NULL);
 	zend_hash_update(ht, arKey, length + 1, (void *)&value, sizeof(int), NULL);
 }
 
@@ -244,9 +248,15 @@ static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value)
 
 static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue)
 {
-	char *arKey = zend_str_tolower_dup(key, length);
+	char *arKey;
 	int *pData = NULL;
 	zend_bool found = 0;
+
+	if (length > PRN_INI_HASH_KEY_MAX_LENGTH) {
+		return 0;
+	}
+
+	arKey = zend_str_tolower_dup(key, length);
 
 	if (zend_ts_hash_find(ht, arKey, length + 1, (void **)&pData) == SUCCESS) {
 		found = 1;
