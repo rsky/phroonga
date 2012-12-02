@@ -40,6 +40,9 @@ static PHP_GSHUTDOWN_FUNCTION(phroonga);
 /* }}} */
 /* {{{ function prototypes (PHP) */
 
+static PRN_FUNCTION(phroonga_obj_ctx);
+static PRN_FUNCTION(phroonga_obj_type_name);
+
 static PHP_FUNCTION(grn_get_version);
 static PHP_FUNCTION(grn_get_package);
 static PHP_FUNCTION(grn_get_default_encoding);
@@ -76,6 +79,38 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_set_match_escalation_threshold, ZEND_SEND_BY_
 ZEND_END_ARG_INFO()
 
 /* }}} */
+/* {{{ argument informations (obj) */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_obj_common, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, obj)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_db_common, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, db)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_db_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, path)
+/*	ZEND_ARG_ARRAY_INFO(0, options, 1) */
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_use, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, db)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_get, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_at, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, id)
+ZEND_END_ARG_INFO()
+
+/* }}} */
 /* {{{ argument informations (log) */
 
 /* }}} */
@@ -96,6 +131,12 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_ctx_get_match_escalation_threshold, arginfo_ctx_common)
 	PHP_FE(grn_ctx_set_match_escalation_threshold, arginfo_ctx_set_match_escalation_threshold)
 	/* obj */
+	PHP_FE(grn_db_open, arginfo_db_open)
+	PHP_FE(grn_db_touch, arginfo_db_common)
+	PHP_FE(grn_ctx_use, arginfo_ctx_use)
+	PHP_FE(grn_ctx_db, arginfo_ctx_common)
+	PHP_FE(grn_ctx_get, arginfo_ctx_get)
+	PHP_FE(grn_ctx_at, arginfo_ctx_at)
 	/* geo */
 	/* log */
 	PHP_FE(grn_default_logger_get_max_level, NULL)
@@ -104,6 +145,9 @@ static zend_function_entry phroonga_functions[] = {
 	/* array */
 	/* pat */
 	/* dat */
+	/* originals */
+	PHP_FE(phroonga_obj_ctx, arginfo_obj_common)
+	PHP_FE(phroonga_obj_type_name, arginfo_obj_common)
 	/* terminator */
 	{ NULL, NULL, NULL }
 };
@@ -348,6 +392,58 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold)
 	} else {
 		RETURN_DOUBLE((double)threshold);
 	}
+}
+
+/* }}} */
+/* {{{ phroonga_obj_ctx() */
+
+static PRN_FUNCTION(phroonga_obj_ctx)
+{
+	zval *zobj = NULL;
+	prn_obj *pobj;
+
+	RETVAL_NULL();
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
+		return;
+	}
+
+	pobj = prn_fetch_obj_internal(zobj TSRMLS_CC);
+	if (!pobj) {
+		return;
+	}
+
+	zend_list_addref(pobj->ctx_id);
+
+	RETURN_RESOURCE((long)pobj->ctx_id);
+}
+
+/* }}} */
+/* {{{ phroonga_obj_type_name() */
+
+static PRN_FUNCTION(phroonga_obj_type_name)
+{
+	zval *zobj = NULL;
+	grn_obj *obj;
+	const char *name;
+
+	RETVAL_NULL();
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
+		return;
+	}
+
+	obj = prn_fetch_obj(zobj TSRMLS_CC);
+	if (!obj) {
+		return;
+	}
+
+	name = prn_obj_type_name(obj);
+	if (name) {
+		RETURN_STRING(name, 1);
+	}
+
+	RETURN_LONG((long)obj->header.type);
 }
 
 /* }}} */

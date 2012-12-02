@@ -64,6 +64,7 @@ PHPAPI grn_obj *prn_fetch_obj(zval *zv TSRMLS_DC);
 /* {{{ miscellanous API */
 
 PHPAPI const char *prn_errstr(grn_rc rc);
+PHPAPI const char *prn_obj_type_name(grn_obj *obj);
 
 /* }}} */
 
