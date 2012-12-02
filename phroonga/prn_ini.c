@@ -113,9 +113,9 @@ PRN_LOCAL PHP_INI_MH(prn_update_default_match_escalation_threshold)
 }
 
 /* }}} */
-/* {{{ prn_update_default_logger_set_max_level() */
+/* {{{ prn_update_default_logger_max_level() */
 
-PRN_LOCAL PHP_INI_MH(prn_update_default_logger_set_max_level)
+PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level)
 {
 	TsHashTable *ht = PRNG(log_levels_ht);
 	grn_log_level level = GRN_LOG_DEFAULT_LEVEL;

@@ -17,7 +17,7 @@ BEGIN_EXTERN_C()
 PRN_LOCAL PHP_INI_MH(prn_update_default_encoding);
 PRN_LOCAL PHP_INI_MH(prn_update_default_command_version);
 PRN_LOCAL PHP_INI_MH(prn_update_default_match_escalation_threshold);
-PRN_LOCAL PHP_INI_MH(prn_update_default_logger_set_max_level);
+PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level);
 
 PRN_LOCAL void prn_init_encodings_ht(TsHashTable *ht);
 PRN_LOCAL void prn_init_command_versions_ht(TsHashTable *ht);

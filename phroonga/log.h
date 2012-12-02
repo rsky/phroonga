@@ -14,9 +14,11 @@
 
 BEGIN_EXTERN_C()
 
-/* PHP function prototypes */
+/* {{{ PHP function prototypes */
+
 PRN_FUNCTION(grn_default_logger_get_max_level);
-PRN_FUNCTION(grn_default_logger_set_max_level);
+
+/* }}} */
 
 END_EXTERN_C()
 

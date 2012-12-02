@@ -93,7 +93,7 @@ PHP_INI_ENTRY("phroonga.default_command_version", "",
 PHP_INI_ENTRY("phroonga.default_match_escalation_threshold", "0",
 	PHP_INI_SYSTEM, prn_update_default_match_escalation_threshold)
 PHP_INI_ENTRY("phroonga.default_logger_max_level", "",
-	PHP_INI_SYSTEM, prn_update_default_logger_set_max_level)
+	PHP_INI_SYSTEM, prn_update_default_logger_max_level)
 PHP_INI_END()
 
 /* }}} */
