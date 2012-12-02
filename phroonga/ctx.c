@@ -100,7 +100,7 @@ PRN_FUNCTION(grn_ctx_open)
 		RETURN_NULL();
 	}
 
-	prn_ctx_zval(ctx, return_value);
+	prn_ctx_zval(ctx, return_value TSRMLS_CC);
 }
 
 /* }}} */
