@@ -83,18 +83,27 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_ctx_check_use_ql() */
+/* {{{ prn_ctx_check_impl() */
 
-PRN_LOCAL zend_bool prn_ctx_check_use_ql(grn_ctx *ctx TSRMLS_DC)
+PRN_LOCAL zend_bool prn_ctx_check_impl(grn_ctx *ctx TSRMLS_DC)
 {
-	if (ctx->flags & GRN_CTX_USE_QL) {
-		return 1;
+	if (!ctx->impl) {
+#if PHP_VERSION_ID < 50400
+		char *space = NULL;
+#else
+		const char *space = NULL;
+#endif
+		const char *class_name = get_active_class_name(&space TSRMLS_CC);
+		const char *function_name = get_active_function_name(TSRMLS_C);
+
+		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			"context is not prepared to use %s%s%s()",
+			class_name, space, function_name);
+
+		return 0;
 	}
 
-	php_error_docref(NULL TSRMLS_CC, E_WARNING,
-		"context is not configured to use QL-API");
-
-	return 0;
+	return 1;
 }
 
 /* }}} */
@@ -211,7 +220,7 @@ PRN_FUNCTION(grn_ctx_set_command_version)
 		RETURN_FALSE;
 	}
 
-	if (!prn_ctx_check_use_ql(ctx TSRMLS_CC)) {
+	if (!prn_ctx_check_impl(ctx TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 
@@ -271,7 +280,7 @@ PRN_FUNCTION(grn_ctx_set_match_escalation_threshold)
 		RETURN_FALSE;
 	}
 
-	if (!prn_ctx_check_use_ql(ctx TSRMLS_CC)) {
+	if (!prn_ctx_check_impl(ctx TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 
