@@ -88,17 +88,22 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 PRN_FUNCTION(grn_ctx_open)
 {
 	long flags = 0L;
+	int actual_flags;
 	grn_ctx *ctx;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &flags) == FAILURE) {
 		return;
 	}
 
-	ctx = grn_ctx_open((int)flags);
+	/* set GRN_CTX_USE_QL so as to invoke grn_ctx_impl_init() */
+	actual_flags = (int)flags;
+	ctx = grn_ctx_open(actual_flags | GRN_CTX_USE_QL);
+	/* ctx = grn_ctx_open((int)flags); */
 	if (!ctx) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to open context");
 		RETURN_NULL();
 	}
+	ctx->flags = actual_flags;
 
 	prn_ctx_zval(ctx, return_value TSRMLS_CC);
 }
