@@ -12,8 +12,17 @@
 #ifndef PHROONGA_CTX_H
 #define PHROONGA_CTX_H
 
+/* {{{ internal function prototypes */
+
 PRN_LOCAL int prn_register_ctx(INIT_FUNC_ARGS);
 PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC);
+
+/* }}} */
+/* {{{ PHP function prototypes */
+
+PRN_FUNCTION(grn_ctx_open);
+
+/* }}} */
 
 #endif
 

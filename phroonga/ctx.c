@@ -83,6 +83,27 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 }
 
 /* }}} */
+/* {{{ grn_ctx_open() */
+
+PRN_FUNCTION(grn_ctx_open)
+{
+	long flags = 0;
+	grn_ctx *ctx;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &flags) == FAILURE) {
+		return;
+	}
+
+	ctx = grn_ctx_open((int)flags);
+	if (!ctx) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to open context");
+		RETURN_NULL();
+	}
+
+	prn_ctx_zval(ctx, return_value);
+}
+
+/* }}} */
 
 /*
  * Local variables:

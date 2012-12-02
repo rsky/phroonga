@@ -50,6 +50,13 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold);
 /* {{{ argument informations */
 
 /* }}} */
+/* {{{ argument informations (ctx) */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, flags)
+ZEND_END_ARG_INFO()
+
+/* }}} */
 /* {{{ argument informations (log) */
 
 /* }}} */
@@ -62,6 +69,7 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_get_default_command_version, NULL)
 	PHP_FE(grn_get_default_match_escalation_threshold, NULL)
 	/* ctx */
+	PHP_FE(grn_ctx_open, arginfo_ctx_open)
 	/* obj */
 	/* geo */
 	/* log */
