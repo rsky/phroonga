@@ -64,7 +64,7 @@ static void prn_free_ctx(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ */
+/* {{{ prn_ctx_zval() */
 
 PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 {
@@ -79,7 +79,7 @@ PRN_LOCAL zval *prn_ctx_zval(grn_ctx *ctx, zval *zv TSRMLS_DC)
 
 	ZEND_REGISTER_RESOURCE(retval, ctx, le_grn_ctx);
 
-	return zv;
+	return retval;
 }
 
 /* }}} */

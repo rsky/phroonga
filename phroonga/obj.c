@@ -87,7 +87,7 @@ PRN_LOCAL zval *prn_obj_zval(grn_ctx *ctx, grn_obj *obj, zval *zv TSRMLS_DC)
 
 	ZEND_REGISTER_RESOURCE(retval, pobj, le_grn_obj);
 
-	return zv;
+	return retval;
 }
 
 /* }}} */
