@@ -75,11 +75,10 @@ static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	prn_obj *pobj = (prn_obj *)rsrc->ptr;
 
 	/* delete from object counter table */
-	if (sizeof(ulong) == sizeof(uintptr_t)) {
-		uintptr_t h = (uintptr_t)pobj->obj;
-		zend_hash_index_del(&PRNG(objects_ht), (ulong)h);
+	if (sizeof(ulong) >= sizeof(uintptr_t)) {
+		zend_hash_index_del(&PRNG(objects_ht), (ulong)((uintptr_t)pobj->obj));
 	} else {
-		char arKey[32];
+		char arKey[32] = {'\0'};
 		uint nKeyLength = (uint)snprintf(arKey, 32, "%p", pobj->obj);
 		zend_hash_del(&PRNG(objects_ht), arKey, nKeyLength);
 	}
@@ -97,7 +96,6 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 	prn_obj *pobj;
 	zval *retval;
 	int obj_id = 0;
-	zend_bool addref = 0;
 
 	HashTable *ht = &PRNG(objects_ht);
 	char arKey[32] = {'\0'};
@@ -113,24 +111,22 @@ PRN_LOCAL zval *prn_obj_zval(int ctx_id, grn_ctx *ctx, grn_obj *obj, zval *zv TS
 	}
 
 	/* find from object counter table */
-	if (sizeof(ulong) == sizeof(uintptr_t)) {
+	if (sizeof(ulong) >= sizeof(uintptr_t)) {
 		h = (ulong)((uintptr_t)obj);
 	} else {
 		nKeyLength = (uint)snprintf(arKey, 32, "%p", obj);
 	}
-	if (zend_hash_quick_find(ht, arKey, nKeyLength, h, (void **)&pData) == SUCCESS) {
-		obj_id = *pData;
-		addref = 1;
-	}
 
-	/* increment object reference count */
-	if (addref) {
+	if (zend_hash_quick_find(ht, arKey, nKeyLength, h, (void **)&pData) == SUCCESS) {
+		/* increment reference count and return */
+		obj_id = *pData;
 		zend_list_addref(obj_id);
 		ZVAL_RESOURCE(retval, (long)obj_id);
 
 		return retval;
 	}
 
+	/* create new resource and register it */
 	pobj = (prn_obj *)emalloc(sizeof(prn_obj));
 	pobj->ctx_id = ctx_id;
 	pobj->ctx = ctx;
