@@ -1,5 +1,5 @@
 --TEST--
-grn_ctx_at() function
+grn_ctx_get() function
 --SKIPIF--
 SKIP incomplete
 --FILE--
