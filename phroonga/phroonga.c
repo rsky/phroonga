@@ -40,8 +40,8 @@ static PHP_GSHUTDOWN_FUNCTION(phroonga);
 /* }}} */
 /* {{{ PHP function prototypes */
 
-static PRN_FUNCTION(phroonga_obj_ctx);
-static PRN_FUNCTION(phroonga_obj_type_name);
+static PHP_FUNCTION(phroonga_obj_ctx);
+static PHP_FUNCTION(phroonga_obj_type_name);
 
 static PHP_FUNCTION(grn_get_version);
 static PHP_FUNCTION(grn_get_package);
@@ -408,7 +408,7 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold)
 /* }}} */
 /* {{{ phroonga_obj_ctx() */
 
-static PRN_FUNCTION(phroonga_obj_ctx)
+static PHP_FUNCTION(phroonga_obj_ctx)
 {
 	zval *zobj = NULL;
 	prn_obj *pobj;
@@ -432,7 +432,7 @@ static PRN_FUNCTION(phroonga_obj_ctx)
 /* }}} */
 /* {{{ phroonga_obj_type_name() */
 
-static PRN_FUNCTION(phroonga_obj_type_name)
+static PHP_FUNCTION(phroonga_obj_type_name)
 {
 	zval *zobj = NULL;
 	grn_obj *obj;
