@@ -15,6 +15,7 @@
 #endif
 
 #include <php.h>
+#include <stdint.h>
 #include <groonga.h>
 
 #define PHROONGA_VERSION "0.0.1"
