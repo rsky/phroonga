@@ -62,6 +62,29 @@ PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC);
 PHPAPI int prn_get_le_obj(void);
 PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC);
 
+PHPAPI int prn_get_le_snip(void);
+PHPAPI grn_snip *prn_snip_fetch(zval *zv TSRMLS_DC);
+
+PHPAPI int prn_get_le_hash(void);
+PHPAPI int prn_get_le_hash_cursor(void);
+PHPAPI grn_hash *prn_hash_fetch(zval *zv TSRMLS_DC);
+PHPAPI grn_hash_cursor *prn_hash_cursor_fetch(zval *zv TSRMLS_DC);
+
+PHPAPI int prn_get_le_array(void);
+PHPAPI int prn_get_le_array_cursor(void);
+PHPAPI grn_array *prn_array_fetch(zval *zv TSRMLS_DC);
+PHPAPI grn_array_cursor *prn_array_cursor_fetch(zval *zv TSRMLS_DC);
+
+PHPAPI int prn_get_le_pat(void);
+PHPAPI int prn_get_le_pat_cursor(void);
+PHPAPI grn_pat *prn_pat_fetch(zval *zv TSRMLS_DC);
+PHPAPI grn_pat_cursor *prn_pat_cursor_fetch(zval *zv TSRMLS_DC);
+
+PHPAPI int prn_get_le_dat(void);
+PHPAPI int prn_get_le_dat_cursor(void);
+PHPAPI grn_dat *prn_dat_fetch(zval *zv TSRMLS_DC);
+PHPAPI grn_dat_cursor *prn_dat_cursor_fetch(zval *zv TSRMLS_DC);
+
 /* }}} */
 /* {{{ miscellanous API */
 

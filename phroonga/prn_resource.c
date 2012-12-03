@@ -9,9 +9,9 @@
 
 #include "prn_resource.h"
 
-/* {{{ prn_resource_dtor() */
+/* {{{ prn_resource_destroy() */
 
-PRN_LOCAL ZEND_RSRC_DTOR_FUNC(prn_resource_dtor)
+PRN_LOCAL ZEND_RSRC_DTOR_FUNC(prn_resource_destroy)
 {
 	prn_resource_free((prn_resource *)rsrc->ptr TSRMLS_CC);
 }
@@ -21,7 +21,7 @@ PRN_LOCAL ZEND_RSRC_DTOR_FUNC(prn_resource_dtor)
 
 PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC)
 {
-	void *ptr = prsrc->value.ptr;
+	void *ptr = prsrc->resource.ptr;
 
 	/* delete from object counter table */
 	if (sizeof(ulong) >= sizeof(uintptr_t)) {
@@ -33,15 +33,15 @@ PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC)
 	}
 
 	prsrc->dtor(prsrc->ctx, ptr);
-	zend_list_delete(prsrc->ctx_id);
+	zend_list_delete(prsrc->owner_id);
 	efree(prsrc);
 }
 
 /* }}} */
 /* {{{ prn_resource_register() */
 
-PRN_LOCAL int prn_resource_register(int ctx_id, grn_ctx *ctx,
-	int resource_id, void *ptr, prn_object_dtor dtor TSRMLS_DC)
+PRN_LOCAL int prn_resource_register(void *ptr, int type,
+	int owner_id, grn_ctx *ctx, prn_resource_dtor dtor TSRMLS_DC)
 {
 	prn_resource *prsrc;
 	int object_id;
@@ -69,14 +69,14 @@ PRN_LOCAL int prn_resource_register(int ctx_id, grn_ctx *ctx,
 
 	/* create new resource and register it */
 	prsrc = (prn_resource *)emalloc(sizeof(prn_resource));
-	prsrc->resource_id = resource_id;
-	prsrc->ctx_id = ctx_id;
+	prsrc->type = type;
+	prsrc->owner_id = owner_id;
 	prsrc->ctx = ctx;
-	prsrc->value.ptr = ptr;
+	prsrc->resource.ptr = ptr;
 	prsrc->dtor = dtor;
 
-	object_id = zend_list_insert(prsrc, resource_id TSRMLS_CC);
-	zend_list_addref(ctx_id);
+	object_id = zend_list_insert(prsrc, type TSRMLS_CC);
+	zend_list_addref(owner_id);
 
 	/* add to object counter table */
 	pData = &object_id;
@@ -88,8 +88,8 @@ PRN_LOCAL int prn_resource_register(int ctx_id, grn_ctx *ctx,
 /* }}} */
 /* {{{ prn_resource_zval() */
 
-PRN_LOCAL zval *prn_resource_zval(zval *zv, int ctx_id, grn_ctx *ctx,
-	int resource_id, void *ptr, prn_object_dtor dtor TSRMLS_DC)
+PRN_LOCAL zval *prn_resource_zval(zval *zv, void *ptr, int type,
+	int owner_id, grn_ctx *ctx, prn_resource_dtor dtor TSRMLS_DC)
 {
 	zval *retval;
 	int object_id;
@@ -101,8 +101,7 @@ PRN_LOCAL zval *prn_resource_zval(zval *zv, int ctx_id, grn_ctx *ctx,
 		MAKE_STD_ZVAL(retval);
 	}
 
-	object_id = prn_resource_register(ctx_id, ctx,
-		resource_id, ptr, dtor TSRMLS_CC);
+	object_id = prn_resource_register(ptr, type, owner_id, ctx, dtor TSRMLS_CC);
 	ZVAL_RESOURCE(retval, (long)object_id);
 
 	return retval;
@@ -117,7 +116,6 @@ PRN_LOCAL void prn_resource_ctx_zval(INTERNAL_FUNCTION_PARAMETERS)
 	void *rsrc = NULL;
 	int resource_type = 0;
 	int ctx_id = 0;
-	int le_ctx = prn_get_le_ctx();
 
 	RETVAL_NULL();
 
@@ -125,21 +123,76 @@ PRN_LOCAL void prn_resource_ctx_zval(INTERNAL_FUNCTION_PARAMETERS)
 		return;
 	}
 
-	rsrc = zend_fetch_resource(&zobj TSRMLS_CC, -1, "grn_*", &resource_type,
-		2, le_ctx, prn_get_le_obj());
+	rsrc = zend_fetch_resource(&zobj TSRMLS_CC,
+		-1, "grn_*", &resource_type, 11,
+		le_grn_ctx, le_grn_obj, le_grn_snip,
+		le_grn_hash, le_grn_hash_cursor,
+		le_grn_array, le_grn_array_cursor,
+		le_grn_pat, le_grn_pat_cursor,
+		le_grn_dat, le_grn_dat_cursor);
 	if (!rsrc) {
 		return;
 	}
 
-	if (resource_type == le_ctx) {
+	if (resource_type == le_grn_ctx) {
 		ctx_id = (int)Z_LVAL_P(zobj);
+	} else if (
+		resource_type == le_grn_hash_cursor
+	 || resource_type == le_grn_array_cursor
+	 || resource_type == le_grn_pat_cursor
+	 || resource_type == le_grn_dat_cursor
+	) {
+		zval *zv;
+
+		MAKE_STD_ZVAL(zv);
+		ZVAL_RESOURCE(zv, (long)((prn_resource *)rsrc)->owner_id);
+
+		rsrc = zend_fetch_resource(&zv TSRMLS_CC,
+			-1, "grn_*", NULL, 4,
+			le_grn_hash, le_grn_array, le_grn_pat, le_grn_dat);
+
+		zval_ptr_dtor(&zv);
+		if (!rsrc) {
+			return;
+		}
+
+		ctx_id = ((prn_resource *)rsrc)->owner_id;
 	} else {
-		ctx_id = ((prn_resource *)rsrc)->ctx_id;
+		ctx_id = ((prn_resource *)rsrc)->owner_id;
 	}
 
 	zend_list_addref(ctx_id);
 
-	RETURN_RESOURCE(ctx_id);
+	RETURN_RESOURCE((long)ctx_id);
+}
+
+/* }}} */
+/* {{{ prn_cursor_owner_zval() */
+
+PRN_LOCAL void prn_cursor_owner_zval(INTERNAL_FUNCTION_PARAMETERS)
+{
+	zval *zcursor = NULL;
+	prn_resource *prsrc = NULL;
+	int owner_id = 0;
+	int le_ctx = prn_get_le_ctx();
+
+	RETVAL_NULL();
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zcursor) == FAILURE) {
+		return;
+	}
+
+	prsrc = (prn_resource *)zend_fetch_resource(&zcursor TSRMLS_CC,
+		-1, "grn_*_cursor", NULL, 4,
+		le_grn_hash_cursor, le_grn_array_cursor,
+		le_grn_pat_cursor, le_grn_dat_cursor);
+	if (!prsrc) {
+		return;
+	}
+
+	zend_list_addref(prsrc->owner_id);
+
+	RETURN_RESOURCE((long)prsrc->owner_id);
 }
 
 /* }}} */

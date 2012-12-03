@@ -17,6 +17,7 @@
 #include "log.h"
 #include "obj.h"
 #include "pat.h"
+#include "snip.h"
 #include "prn_ini.h"
 #include "prn_constants.h"
 #include <ext/standard/info.h>
@@ -45,9 +46,6 @@ static PHP_FUNCTION(grn_get_package);
 static PHP_FUNCTION(grn_get_default_encoding);
 static PHP_FUNCTION(grn_get_default_command_version);
 static PHP_FUNCTION(grn_get_default_match_escalation_threshold);
-
-/* }}} */
-/* {{{ argument informations */
 
 /* }}} */
 /* {{{ argument informations (ctx) */
@@ -141,6 +139,7 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_ctx_get, arginfo_ctx_get)
 	PHP_FE(grn_ctx_at, arginfo_ctx_at)
 	/* geo */
+	/* snip */
 	/* log */
 	PHP_FE(grn_default_logger_get_max_level, NULL)
 	/* expr */
@@ -215,8 +214,37 @@ static PHP_MINIT_FUNCTION(phroonga)
 	if (prn_ctx_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
 		return FAILURE;
 	}
-
 	if (prn_obj_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+/*
+	if (prn_geo_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+	if (prn_snip_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+/*
+	if (prn_log_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+/*
+	if (prn_expr_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+	if (prn_hash_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_array_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_pat_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_dat_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
 		return FAILURE;
 	}
 

@@ -11,12 +11,13 @@
 
 /* {{{ globals */
 
-static int le_grn_ctx;
+PRN_LOCAL int le_grn_ctx = -1;
+PRN_DECLARE_RSRC_NAME(prn_ctx_rsrc_name, grn_ctx);
 
 /* }}} */
 /* {{{ function prototypes*/
 
-static ZEND_RSRC_DTOR_FUNC(prn_ctx_dtor);
+static ZEND_RSRC_DTOR_FUNC(prn_ctx_destroy);
 
 /* }}} */
 /* {{{ prn_get_le_ctx() */
@@ -27,15 +28,20 @@ PHPAPI int prn_get_le_ctx(void)
 }
 
 /* }}} */
+/* {{{ prn_ctx_fetch_internal() */
+
+static inline grn_ctx *prn_ctx_fetch_internal(zval *zv TSRMLS_DC)
+{
+	return (grn_ctx *)zend_fetch_resource(&zv TSRMLS_CC,
+		-1, prn_ctx_rsrc_name, NULL, 1, le_grn_ctx);
+}
+
+/* }}} */
 /* {{{ prn_ctx_fetch() */
 
 PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC)
 {
-	grn_ctx *ctx;
-
-	ZEND_FETCH_RESOURCE_NO_RETURN(ctx, grn_ctx *, &zv, -1, "grn_ctx", le_grn_ctx);
-
-	return ctx;
+	return prn_ctx_fetch_internal(zv TSRMLS_CC);
 }
 
 /* }}} */
@@ -43,22 +49,22 @@ PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC)
 
 PRN_LOCAL int prn_ctx_startup(INIT_FUNC_ARGS)
 {
-	int resource_id = zend_register_list_destructors_ex(
-		prn_ctx_dtor, NULL, "grn_ctx", module_number);
+	int resource_type = zend_register_list_destructors_ex(
+		prn_ctx_destroy, NULL, prn_ctx_rsrc_name, module_number);
 
-	if (resource_id == FAILURE) {
+	if (resource_type == FAILURE) {
 		return FAILURE;
 	}
 
-	le_grn_ctx = resource_id;
+	le_grn_ctx = resource_type;
 
 	return SUCCESS;
 }
 
 /* }}} */
-/* {{{ prn_ctx_dtor() */
+/* {{{ prn_ctx_destroy() */
 
-static ZEND_RSRC_DTOR_FUNC(prn_ctx_dtor)
+static ZEND_RSRC_DTOR_FUNC(prn_ctx_destroy)
 {
 	grn_ctx_close((grn_ctx *)rsrc->ptr);
 }
@@ -151,7 +157,7 @@ PRN_FUNCTION(grn_ctx_get_encoding)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}
@@ -174,7 +180,7 @@ PRN_FUNCTION(grn_ctx_set_encoding)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}
@@ -201,7 +207,7 @@ PRN_FUNCTION(grn_ctx_get_command_version)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}
@@ -225,7 +231,7 @@ PRN_FUNCTION(grn_ctx_set_command_version)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}
@@ -257,7 +263,7 @@ PRN_FUNCTION(grn_ctx_get_match_escalation_threshold)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}
@@ -285,7 +291,7 @@ PRN_FUNCTION(grn_ctx_set_match_escalation_threshold)
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
 		RETURN_FALSE;
 	}

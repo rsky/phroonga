@@ -7,14 +7,13 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#define PRN_LE_GRN_OBJ le_grn_obj
-static int le_grn_obj;
 
 #include "obj.h"
 
-/* {{{ function prototypes*/
+/* {{{ globals */
 
-static void prn_free_obj(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+PRN_LOCAL int le_grn_obj = -1;
+PRN_DECLARE_RSRC_NAME(prn_obj_rsrc_name, grn_obj);
 
 /* }}} */
 /* {{{ prn_get_le_obj() */
@@ -43,12 +42,12 @@ PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC)
 
 PRN_LOCAL int prn_obj_startup(INIT_FUNC_ARGS)
 {
-	int resource_id = zend_register_list_destructors_ex(
-		prn_resource_dtor, NULL, "grn_obj", module_number);
-	if (resource_id == FAILURE) {
+	int resource_type = zend_register_list_destructors_ex(
+		prn_resource_destroy, NULL, prn_obj_rsrc_name, module_number);
+	if (resource_type == FAILURE) {
 		return FAILURE;
 	}
-	le_grn_obj = resource_id;
+	le_grn_obj = resource_type;
 
 	return SUCCESS;
 }

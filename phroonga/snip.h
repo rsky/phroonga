@@ -10,28 +10,33 @@
 #include "phroonga.h"
 #include "prn_resource.h"
 
-#ifndef PHROONGA_CTX_H
-#define PHROONGA_CTX_H
+#ifndef PHROONGA_SNIP_H
+#define PHROONGA_SNIP_H
 
 BEGIN_EXTERN_C()
 
 /* {{{ internal function prototypes */
 
-PRN_LOCAL int prn_ctx_startup(INIT_FUNC_ARGS);
-PRN_LOCAL int prn_ctx_register(grn_ctx *ctx TSRMLS_DC);
-PRN_LOCAL zval *prn_ctx_zval(zval *zv, grn_ctx *ctx TSRMLS_DC);
-PRN_LOCAL zend_bool prn_ctx_check_impl(grn_ctx *ctx TSRMLS_DC);
+PRN_LOCAL int prn_snip_startup(INIT_FUNC_ARGS);
 
 /* }}} */
 /* {{{ PHP function prototypes */
 
-PRN_FUNCTION(grn_ctx_open);
-PRN_FUNCTION(grn_ctx_get_encoding);
-PRN_FUNCTION(grn_ctx_set_encoding);
-PRN_FUNCTION(grn_ctx_get_command_version);
-PRN_FUNCTION(grn_ctx_set_command_version);
-PRN_FUNCTION(grn_ctx_get_match_escalation_threshold);
-PRN_FUNCTION(grn_ctx_set_match_escalation_threshold);
+/* }}} */
+/* {{{ inline functions and utility macros */
+
+static inline prn_snip *prn_snip_fetch_internal(zval *zv TSRMLS_DC)
+{
+	return (prn_snip *)zend_fetch_resource(&zv TSRMLS_CC,
+		-1, prn_snip_rsrc_name, NULL, 1, le_grn_snip);
+}
+
+static inline zval *prn_snip_zval(zval *zv, grn_snip *snip,
+	int ctx_id, grn_ctx *ctx TSRMLS_DC)
+{
+	return prn_resource_zval(zv, snip, le_grn_snip,
+		ctx_id, ctx, (prn_resource_dtor)grn_snip_close TSRMLS_CC);
+}
 
 /* }}} */
 
