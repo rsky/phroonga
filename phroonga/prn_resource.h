@@ -53,6 +53,8 @@ PRN_LOCAL int prn_resource_register(int ctx_id, grn_ctx *ctx,
 PRN_LOCAL zval *prn_resource_zval(zval *zv, int ctx_id, grn_ctx *ctx,
 	int resource_id, void *ptr, prn_object_dtor dtor TSRMLS_DC);
 
+PRN_LOCAL void prn_resource_ctx_zval(INTERNAL_FUNCTION_PARAMETERS);
+
 /* }}} */
 
 END_EXTERN_C()

@@ -24,6 +24,8 @@ PRN_LOCAL grn_rc prn_obj_unlink(grn_ctx *ctx, grn_obj *obj);
 /* }}} */
 /* {{{ PHP function prototypes */
 
+PRN_FUNCTION(grn_obj_type);
+PRN_FUNCTION(grn_obj_type_name);
 PRN_FUNCTION(grn_db_open);
 PRN_FUNCTION(grn_db_touch);
 PRN_FUNCTION(grn_ctx_use);

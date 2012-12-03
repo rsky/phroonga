@@ -109,6 +109,40 @@ PRN_LOCAL zval *prn_resource_zval(zval *zv, int ctx_id, grn_ctx *ctx,
 }
 
 /* }}} */
+/* {{{ prn_resource_ctx_zval() */
+
+PRN_LOCAL void prn_resource_ctx_zval(INTERNAL_FUNCTION_PARAMETERS)
+{
+	zval *zobj = NULL;
+	void *rsrc = NULL;
+	int resource_type = 0;
+	int ctx_id = 0;
+	int le_ctx = prn_get_le_ctx();
+
+	RETVAL_NULL();
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
+		return;
+	}
+
+	rsrc = zend_fetch_resource(&zobj TSRMLS_CC, -1, "grn_*", &resource_type,
+		2, le_ctx, prn_get_le_obj());
+	if (!rsrc) {
+		return;
+	}
+
+	if (resource_type == le_ctx) {
+		ctx_id = (int)Z_LVAL_P(zobj);
+	} else {
+		ctx_id = ((prn_resource *)rsrc)->ctx_id;
+	}
+
+	zend_list_addref(ctx_id);
+
+	RETURN_RESOURCE(ctx_id);
+}
+
+/* }}} */
 
 /*
  * Local variables:

@@ -9,7 +9,7 @@ $path = $dir . '/test.db';
 $ctx = grn_ctx_open();
 $db = grn_db_open($ctx, $path);
 if ($db) {
-    printf('%s/%s', get_resource_type($db), phroonga_obj_type_name($db));
+    printf('%s/%s', get_resource_type($db), grn_obj_type_name($db));
 }
 ?>
 --EXPECT--

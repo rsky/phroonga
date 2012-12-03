@@ -40,9 +40,6 @@ static PHP_GSHUTDOWN_FUNCTION(phroonga);
 /* }}} */
 /* {{{ PHP function prototypes */
 
-static PHP_FUNCTION(phroonga_obj_ctx);
-static PHP_FUNCTION(phroonga_obj_type_name);
-
 static PHP_FUNCTION(grn_get_version);
 static PHP_FUNCTION(grn_get_package);
 static PHP_FUNCTION(grn_get_default_encoding);
@@ -116,6 +113,9 @@ ZEND_END_ARG_INFO()
 /* }}} */
 /* {{{ function entry */
 
+#define PRN_INTERNAL_FALIAS(name, alias, arg_info) \
+	ZEND_FENTRY(name, alias, arg_info, 0)
+
 static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_get_version, NULL)
 	PHP_FE(grn_get_package, NULL)
@@ -131,6 +131,9 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_ctx_get_match_escalation_threshold, arginfo_ctx_common)
 	PHP_FE(grn_ctx_set_match_escalation_threshold, arginfo_ctx_set_match_escalation_threshold)
 	/* obj */
+	PRN_INTERNAL_FALIAS(grn_obj_ctx, prn_resource_ctx_zval, arginfo_obj_common)
+	PHP_FE(grn_obj_type, arginfo_obj_common)
+	PHP_FE(grn_obj_type_name, arginfo_obj_common)
 	PHP_FE(grn_db_open, arginfo_db_open)
 	PHP_FE(grn_db_touch, arginfo_db_common)
 	PHP_FE(grn_ctx_use, arginfo_ctx_use)
@@ -145,9 +148,6 @@ static zend_function_entry phroonga_functions[] = {
 	/* array */
 	/* pat */
 	/* dat */
-	/* originals */
-	PHP_FE(phroonga_obj_ctx, arginfo_obj_common)
-	PHP_FE(phroonga_obj_type_name, arginfo_obj_common)
 	/* terminator */
 	{ NULL, NULL, NULL }
 };
@@ -403,58 +403,6 @@ static PHP_FUNCTION(grn_get_default_match_escalation_threshold)
 	} else {
 		RETURN_DOUBLE((double)threshold);
 	}
-}
-
-/* }}} */
-/* {{{ phroonga_obj_ctx() */
-
-static PHP_FUNCTION(phroonga_obj_ctx)
-{
-	zval *zobj = NULL;
-	prn_obj *pobj;
-
-	RETVAL_NULL();
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
-		return;
-	}
-
-	pobj = prn_obj_fetch_internal(zobj TSRMLS_CC);
-	if (!pobj) {
-		return;
-	}
-
-	zend_list_addref(pobj->ctx_id);
-
-	RETURN_RESOURCE((long)pobj->ctx_id);
-}
-
-/* }}} */
-/* {{{ phroonga_obj_type_name() */
-
-static PHP_FUNCTION(phroonga_obj_type_name)
-{
-	zval *zobj = NULL;
-	grn_obj *obj;
-	const char *name;
-
-	RETVAL_NULL();
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
-		return;
-	}
-
-	obj = prn_obj_fetch(zobj TSRMLS_CC);
-	if (!obj) {
-		return;
-	}
-
-	name = prn_obj_type_name(obj);
-	if (name) {
-		RETURN_STRING(name, 1);
-	}
-
-	RETURN_LONG((long)obj->header.type);
 }
 
 /* }}} */

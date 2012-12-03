@@ -95,7 +95,7 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 		case GRN_TABLE_HASH_KEY: return "table_hash_key";
 		case GRN_TABLE_PAT_KEY: return "table_pat_key";
 		case GRN_TABLE_DAT_KEY: return "table_dat_key";
-		case GRN_TABLE_NO_KEY: return "Table_no_key";
+		case GRN_TABLE_NO_KEY: return "table_no_key";
 		case GRN_TABLE_VIEW: return "table_view";
 		case GRN_DB: return "db";
 		case GRN_COLUMN_FIX_SIZE: return "column_fix_size";
@@ -104,6 +104,44 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 	}
 
 	return NULL;
+}
+
+/* }}} */
+/* {{{ grn_obj_type() */
+
+PRN_FUNCTION(grn_obj_type)
+{
+	zval *zobj = NULL;
+	grn_obj *obj;
+	const char *name;
+
+	RETVAL_FALSE;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
+		return;
+	}
+
+	obj = prn_obj_fetch(zobj TSRMLS_CC);
+	if (!obj) {
+		return;
+	}
+
+	RETURN_LONG((long)obj->header.type);
+}
+
+/* }}} */
+/* {{{ grn_obj_type_name() */
+
+PRN_FUNCTION(grn_obj_type_name)
+{
+	PHP_FN(grn_obj_type)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	if (Z_TYPE_P(return_value) == IS_LONG) {
+		grn_obj obj = { .header.type = (unsigned char)Z_LVAL_P(return_value) };
+		const char *name = prn_obj_type_name(&obj);
+		if (name) {
+			RETURN_STRING(name, 1);
+		}
+	}
 }
 
 /* }}} */

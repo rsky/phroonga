@@ -9,7 +9,7 @@ $current_db = grn_ctx_db($ctx);
 printf(
     "%s/%s\n",
     get_resource_type($current_db),
-    phroonga_obj_type_name($current_db)
+    grn_obj_type_name($current_db)
 );
 
 grn_ctx_use($ctx, null);
