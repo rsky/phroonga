@@ -7,7 +7,6 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
 #include "prn_resource.h"
 
 #ifndef PHROONGA_PAT_H
@@ -17,7 +16,7 @@ BEGIN_EXTERN_C()
 
 /* {{{ internal function prototypes */
 
-PRN_LOCAL int prn_pat_startup(INIT_FUNC_ARGS);
+PRN_LOCAL int prn_register_pat(INIT_FUNC_ARGS);
 PRN_LOCAL grn_rc prn_pat_cursor_close(grn_ctx *ctx, grn_pat_cursor *cursor);
 
 /* }}} */

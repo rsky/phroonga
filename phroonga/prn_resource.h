@@ -7,7 +7,7 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
+#include "private.h"
 
 #ifndef PHROONGA_RESOURCE_H
 #define PHROONGA_RESOURCE_H
@@ -154,6 +154,8 @@ typedef struct {
 
 /* }}} */
 /* {{{ internal function prototypes */
+
+PRN_LOCAL int prn_register_types(INIT_FUNC_ARGS);
 
 PRN_LOCAL ZEND_RSRC_DTOR_FUNC(prn_resource_destroy);
 PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC);

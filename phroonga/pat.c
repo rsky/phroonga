@@ -60,9 +60,9 @@ PHPAPI grn_pat_cursor *prn_pat_cursor_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_pat_startup() */
+/* {{{ prn_register_pat() */
 
-PRN_LOCAL int prn_pat_startup(INIT_FUNC_ARGS)
+PRN_LOCAL int prn_register_pat(INIT_FUNC_ARGS)
 {
 	int resource_type1, resource_type2;
 	resource_type1 = zend_register_list_destructors_ex(

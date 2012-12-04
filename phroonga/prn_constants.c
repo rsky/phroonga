@@ -7,7 +7,7 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
+#include "prn_constants.h"
 
 /* {{{ function prototypes */
 
@@ -32,7 +32,7 @@ static void prn_register_snip_open_flags(INIT_FUNC_ARGS);
 static void prn_register_logger_info_flags(INIT_FUNC_ARGS);
 static void prn_register_obj_format_flags(INIT_FUNC_ARGS);
 static void prn_register_expr_flags(INIT_FUNC_ARGS);
-static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS);
+static void prn_register_ctx_connect_flags(INIT_FUNC_ARGS);
 
 static void prn_register_obj_types(INIT_FUNC_ARGS);
 
@@ -68,7 +68,7 @@ PRN_LOCAL void prn_register_constants(INIT_FUNC_ARGS)
 	prn_register_logger_info_flags(INIT_FUNC_ARGS_PASSTHRU);
 	prn_register_obj_format_flags(INIT_FUNC_ARGS_PASSTHRU);
 	prn_register_expr_flags(INIT_FUNC_ARGS_PASSTHRU);
-	prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS_PASSTHRU);
+	prn_register_ctx_connect_flags(INIT_FUNC_ARGS_PASSTHRU);
 
 	prn_register_obj_types(INIT_FUNC_ARGS_PASSTHRU);
 }
@@ -507,9 +507,9 @@ static void prn_register_expr_flags(INIT_FUNC_ARGS)
 }
 
 /* }}} */
-/* {{{ prn_register_ctx_cnnect_flags() */
+/* {{{ prn_register_ctx_connect_flags() */
 
-static void prn_register_ctx_cnnect_flags(INIT_FUNC_ARGS)
+static void prn_register_ctx_connect_flags(INIT_FUNC_ARGS)
 {
 	PRN_REGISTER_CONSTANT(GRN_CTX_MORE);
 	PRN_REGISTER_CONSTANT(GRN_CTX_TAIL);

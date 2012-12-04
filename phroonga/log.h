@@ -7,7 +7,7 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
+#include "private.h"
 
 #ifndef PHROONGA_LOG_H
 #define PHROONGA_LOG_H

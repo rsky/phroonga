@@ -37,9 +37,9 @@ PHPAPI grn_snip *prn_snip_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_snip_startup() */
+/* {{{ prn_register_snip() */
 
-PRN_LOCAL int prn_snip_startup(INIT_FUNC_ARGS)
+PRN_LOCAL int prn_register_snip(INIT_FUNC_ARGS)
 {
 	int resource_type = zend_register_list_destructors_ex(
 		prn_resource_destroy, NULL, prn_snip_rsrc_name, module_number);

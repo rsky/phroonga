@@ -20,37 +20,20 @@
 
 #define PHROONGA_VERSION "0.0.1"
 
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define PRN_LOCAL __attribute__((visibility("hidden")))
-#else
-#define PRN_LOCAL
-#endif
-#define PRN_FUNCTION(name) PRN_LOCAL PHP_FUNCTION(name)
-
 BEGIN_EXTERN_C()
 
 /* {{{ module globals */
 
 ZEND_BEGIN_MODULE_GLOBALS(phroonga)
-	TsHashTable *encodings_ht;
-	TsHashTable *command_versions_ht;
-	TsHashTable *log_levels_ht;
-	HashTable *resources_ht;
-#ifdef ZTS
-	MUTEX_T mutexp;
-#endif
+	HashTable addr_id_map;
 ZEND_END_MODULE_GLOBALS(phroonga)
 
 ZEND_EXTERN_MODULE_GLOBALS(phroonga)
 
 #ifdef ZTS
 #define PRNG(v) TSRMG(phroonga_globals_id, zend_phroonga_globals *, v)
-#define PRN_MUTEX_LOCK() tsrm_mutex_lock(PRNG(mutexp))
-#define PRN_MUTEX_UNLOCK() tsrm_mutex_unlock(PRNG(mutexp))
 #else
 #define PRNG(v) (phroonga_globals.v)
-#define PRN_MUTEX_LOCK()
-#define PRN_MUTEX_UNLOCK()
 #endif
 
 /* }}} */

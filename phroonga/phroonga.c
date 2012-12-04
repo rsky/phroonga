@@ -8,6 +8,12 @@
  */
 
 #include "phroonga.h"
+#include <ext/standard/info.h>
+#include <Zend/zend_extensions.h>
+
+#include "prn_ini.h"
+#include "prn_constants.h"
+
 #include "array.h"
 #include "ctx.h"
 #include "dat.h"
@@ -18,14 +24,14 @@
 #include "obj.h"
 #include "pat.h"
 #include "snip.h"
-#include "prn_ini.h"
-#include "prn_constants.h"
-#include <ext/standard/info.h>
-#include <Zend/zend_extensions.h>
 
 /* {{{ globals */
 
 PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
+
+#ifdef ZTS
+PRN_LOCAL MUTEX_T phroonga_mutex = NULL;
+#endif
 
 /* }}} */
 /* {{{ module function prototypes */
@@ -148,14 +154,14 @@ static zend_function_entry phroonga_functions[] = {
 	/* pat */
 	/* dat */
 	/* terminator */
-	{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL, 0, 0 }
 };
 
 /* }}} */
 /* {{{ module dependencies */
 
 static zend_module_dep phroonga_deps[] = {
-	{NULL, NULL, NULL, 0}
+	{ NULL, NULL, NULL, 0 }
 };
 
 /* }}} */
@@ -207,44 +213,16 @@ static PHP_MINIT_FUNCTION(phroonga)
 		return FAILURE;
 	}
 
+#ifdef ZTS
+	phroonga_mutex = tsrm_mutex_alloc();
+#endif
+
+	prn_init_ini_param_tables();
 	REGISTER_INI_ENTRIES();
 
 	prn_register_constants(INIT_FUNC_ARGS_PASSTHRU);
 
-	if (prn_ctx_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-	if (prn_obj_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-/*
-	if (prn_geo_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-*/
-	if (prn_snip_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-/*
-	if (prn_log_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-*/
-/*
-	if (prn_expr_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-*/
-	if (prn_hash_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-	if (prn_array_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-	if (prn_pat_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
-		return FAILURE;
-	}
-	if (prn_dat_startup(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+	if (prn_register_types(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -257,6 +235,11 @@ static PHP_MINIT_FUNCTION(phroonga)
 static PHP_MSHUTDOWN_FUNCTION(phroonga)
 {
 	UNREGISTER_INI_ENTRIES();
+	prn_destroy_ini_param_tables();
+
+#ifdef ZTS
+	tsrm_mutex_free(phroonga_mutex);
+#endif
 
 	if (grn_fin() != GRN_SUCCESS) {
 		return FAILURE;
@@ -270,10 +253,7 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga)
 
 static PHP_RINIT_FUNCTION(phroonga)
 {
-	PRNG(resources_ht) = (HashTable *)emalloc(sizeof(HashTable));
-	if (zend_hash_init(PRNG(resources_ht), 32, NULL, NULL, 0) == FAILURE) {
-		return FAILURE;
-	}
+	zend_hash_clean(&PRNG(addr_id_map));
 
 	return SUCCESS;
 }
@@ -283,10 +263,6 @@ static PHP_RINIT_FUNCTION(phroonga)
 
 static PHP_RSHUTDOWN_FUNCTION(phroonga)
 {
-	zend_hash_destroy(PRNG(resources_ht));
-	efree(PRNG(resources_ht));
-	PRNG(resources_ht) = NULL;
-
 	return SUCCESS;
 }
 
@@ -310,19 +286,7 @@ static PHP_MINFO_FUNCTION(phroonga)
 
 static PHP_GINIT_FUNCTION(phroonga)
 {
-	memset(phroonga_globals, 0, sizeof(zend_phroonga_globals));
-
-	phroonga_globals->encodings_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
-	phroonga_globals->command_versions_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
-	phroonga_globals->log_levels_ht = (TsHashTable *)pemalloc(sizeof(TsHashTable), 1);
-
-	prn_setup_encodings_ht(phroonga_globals->encodings_ht );
-	prn_setup_command_versions_ht(phroonga_globals->command_versions_ht);
-	prn_setup_log_levels_ht(phroonga_globals->log_levels_ht);
-
-#ifdef ZTS
-	phroonga_globals->mutexp = tsrm_mutex_alloc();
-#endif
+	zend_hash_init(&phroonga_globals->addr_id_map, 32, NULL, NULL, 1);
 }
 
 /* }}} */
@@ -330,17 +294,7 @@ static PHP_GINIT_FUNCTION(phroonga)
 
 static PHP_GSHUTDOWN_FUNCTION(phroonga)
 {
-	zend_ts_hash_destroy(phroonga_globals->encodings_ht);
-	zend_ts_hash_destroy(phroonga_globals->command_versions_ht);
-	zend_ts_hash_destroy(phroonga_globals->log_levels_ht);
-
-	pefree(phroonga_globals->encodings_ht, 1);
-	pefree(phroonga_globals->command_versions_ht, 1);
-	pefree(phroonga_globals->log_levels_ht, 1);
-
-#ifdef ZTS
-	tsrm_mutex_free(phroonga_globals->mutexp);
-#endif
+	zend_hash_destroy(&phroonga_globals->addr_id_map);
 }
 
 /* }}} */

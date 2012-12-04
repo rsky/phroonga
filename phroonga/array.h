@@ -17,7 +17,7 @@ BEGIN_EXTERN_C()
 
 /* {{{ internal function prototypes */
 
-PRN_LOCAL int prn_array_startup(INIT_FUNC_ARGS);
+PRN_LOCAL int prn_register_array(INIT_FUNC_ARGS);
 PRN_LOCAL grn_rc prn_array_cursor_close(grn_ctx *ctx, grn_array_cursor *cursor);
 
 /* }}} */

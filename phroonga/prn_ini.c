@@ -7,38 +7,51 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
+#include "prn_ini.h"
 #include <php_ini.h>
 
+/* {{{ glboals */
+
+static struct {
+	HashTable encodings;
+	HashTable command_versions;
+	HashTable log_levels;
+} tables;
+
+/* }}} */
 /* {{{ macros */
 
 #define PRN_INI_HASH_KEY_BUF_SIZE 32
 #define PRN_INI_HASH_KEY_MAX_LENGTH (PRN_INI_HASH_KEY_BUF_SIZE - 1)
 
 #define PRN_INI_HASH_ADD(ht, value) \
-	prn_ini_non_ts_hash_add(TS_HASH(ht), #value, value, 1)
+	prn_ini_hash_add(ht, #value, value, 1)
 
 #define PRN_INI_HASH_ADD_ALIAS(ht, value, alias) \
-	prn_ini_non_ts_hash_add(TS_HASH(ht), alias, value, 0)
+	prn_ini_hash_add(ht, alias, value, 0)
 
 /* }}} */
 /* {{{ function prototypes */
 
-static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value, int index_add);
-static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue);
+static void prn_ini_hash_add(HashTable *ht, const char *key, int value, int index_add);
+static zend_bool prn_ini_hash_find(HashTable *ht, const char *key, uint length, int *pValue);
+
+static void prn_init_encodings(void);
+static void prn_init_command_versions(void);
+static void prn_init_log_levels(void);
 
 /* }}} */
 /* {{{ prn_update_default_encoding() */
 
 PRN_LOCAL PHP_INI_MH(prn_update_default_encoding)
 {
-	TsHashTable *ht = PRNG(encodings_ht);
+	HashTable *ht = &tables.encodings;
 	grn_encoding encoding = GRN_ENC_DEFAULT;
 	grn_rc rc;
 
 	if (new_value && new_value[0]) {
 		int value = 0;
-		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+		if (prn_ini_hash_find(ht, new_value, new_value_length, &value)) {
 			encoding = (grn_encoding)value;
 		} else {
 			return FAILURE;
@@ -63,13 +76,13 @@ PRN_LOCAL PHP_INI_MH(prn_update_default_encoding)
 
 PRN_LOCAL PHP_INI_MH(prn_update_default_command_version)
 {
-	TsHashTable *ht = PRNG(command_versions_ht);
+	HashTable *ht = &tables.command_versions;
 	grn_command_version version = GRN_COMMAND_VERSION_DEFAULT;
 	grn_rc rc;
 
 	if (new_value && new_value[0]) {
 		int value = 0;
-		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+		if (prn_ini_hash_find(ht, new_value, new_value_length, &value)) {
 			version = (grn_command_version)value;
 		} else {
 			return FAILURE;
@@ -118,12 +131,12 @@ PRN_LOCAL PHP_INI_MH(prn_update_default_match_escalation_threshold)
 
 PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level)
 {
-	TsHashTable *ht = PRNG(log_levels_ht);
+	HashTable *ht = &tables.log_levels;
 	grn_log_level level = GRN_LOG_DEFAULT_LEVEL;
 
 	if (new_value && new_value[0]) {
 		int value = 0;
-		if (prn_ini_ts_hash_find(ht, new_value, new_value_length, &value)) {
+		if (prn_ini_hash_find(ht, new_value, new_value_length, &value)) {
 			level = (grn_log_level)value;
 		} else {
 			return FAILURE;
@@ -140,11 +153,33 @@ PRN_LOCAL PHP_INI_MH(prn_update_default_logger_max_level)
 }
 
 /* }}} */
-/* {{{ prn_setup_encodings_ht() */
+/* {{{ prn_init_ini_param_tables() */
 
-PRN_LOCAL void prn_setup_encodings_ht(TsHashTable *ht)
+PRN_LOCAL void prn_init_ini_param_tables(void)
 {
-	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
+	prn_init_encodings();
+	prn_init_command_versions();
+	prn_init_log_levels();
+}
+
+/* }}} */
+/* {{{ prn_destroy_ini_param_tables() */
+
+PRN_LOCAL void prn_destroy_ini_param_tables(void)
+{
+	zend_hash_destroy(&tables.encodings);
+	zend_hash_destroy(&tables.command_versions);
+	zend_hash_destroy(&tables.log_levels);
+}
+
+/* }}} */
+/* {{{ prn_init_encodings() */
+
+static void prn_init_encodings(void)
+{
+	HashTable *ht = &tables.encodings;
+
+	zend_hash_init(ht, 32, NULL, NULL, 1);
 
 	PRN_INI_HASH_ADD(ht, GRN_ENC_DEFAULT);
 	PRN_INI_HASH_ADD(ht, GRN_ENC_NONE);
@@ -173,11 +208,13 @@ PRN_LOCAL void prn_setup_encodings_ht(TsHashTable *ht)
 }
 
 /* }}} */
-/* {{{ prn_setup_command_versions_ht() */
+/* {{{ prn_init_command_versions() */
 
-PRN_LOCAL void prn_setup_command_versions_ht(TsHashTable *ht)
+static void prn_init_command_versions(void)
 {
-	zend_ts_hash_init(ht, 16, NULL, NULL, 1);
+	HashTable *ht = &tables.command_versions;
+
+	zend_hash_init(ht, 16, NULL, NULL, 1);
 
 	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_DEFAULT);
 	PRN_INI_HASH_ADD(ht, GRN_COMMAND_VERSION_1);
@@ -197,11 +234,13 @@ PRN_LOCAL void prn_setup_command_versions_ht(TsHashTable *ht)
 }
 
 /* }}} */
-/* {{{ prn_setup_log_levels_ht() */
+/* {{{ prn_init_log_levels() */
 
-PRN_LOCAL void prn_setup_log_levels_ht(TsHashTable *ht)
+static void prn_init_log_levels(void)
 {
-	zend_ts_hash_init(ht, 32, NULL, NULL, 1);
+	HashTable *ht = &tables.log_levels;
+
+	zend_hash_init(ht, 32, NULL, NULL, 1);
 
 	PRN_INI_HASH_ADD(ht, GRN_LOG_NONE);
 	PRN_INI_HASH_ADD(ht, GRN_LOG_EMERG);
@@ -233,9 +272,9 @@ PRN_LOCAL void prn_setup_log_levels_ht(TsHashTable *ht)
 }
 
 /* }}} */
-/* {{{ prn_ini_non_ts_hash_add() */
+/* {{{ prn_ini_hash_add() */
 
-static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value, int index_add)
+static void prn_ini_hash_add(HashTable *ht, const char *key, int value, int index_add)
 {
 	char buf[PRN_INI_HASH_KEY_BUF_SIZE];
 	const char *arKey;
@@ -258,9 +297,9 @@ static void prn_ini_non_ts_hash_add(HashTable *ht, const char *key, int value, i
 }
 
 /* }}} */
-/* {{{ prn_ini_ts_hash_find() */
+/* {{{ prn_ini_hash_find() */
 
-static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint length, int *pValue)
+static zend_bool prn_ini_hash_find(HashTable *ht, const char *key, uint length, int *pValue)
 {
 	char *arKey;
 	int *pData = NULL;
@@ -272,7 +311,7 @@ static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint len
 
 	arKey = zend_str_tolower_dup(key, length);
 
-	if (zend_ts_hash_find(ht, arKey, length, (void **)&pData) == SUCCESS) {
+	if (zend_hash_find(ht, arKey, length, (void **)&pData) == SUCCESS) {
 		found = 1;
 		if (pValue) {
 			*pValue = *pData;
@@ -282,6 +321,30 @@ static zend_bool prn_ini_ts_hash_find(TsHashTable *ht, const char *key, uint len
 	efree(arKey);
 
 	return found;
+}
+
+/* }}} */
+/* {{{ prn_is_valid_encoding() */
+
+PRN_LOCAL int prn_is_valid_encoding(long encoding)
+{
+	return zend_hash_index_exists(&tables.encodings, (ulong)encoding);
+}
+
+/* }}} */
+/* {{{ prn_is_valid_command_version() */
+
+PRN_LOCAL int prn_is_valid_command_version(long version)
+{
+	return zend_hash_index_exists(&tables.command_versions, (ulong)version);
+}
+
+/* }}} */
+/* {{{ prn_is_valid_log_level() */
+
+PRN_LOCAL int prn_is_valid_log_level(long level)
+{
+	return zend_hash_index_exists(&tables.log_levels, (ulong)level);
 }
 
 /* }}} */

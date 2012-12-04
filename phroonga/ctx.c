@@ -45,9 +45,9 @@ PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_ctx_startup() */
+/* {{{ prn_register_ctx() */
 
-PRN_LOCAL int prn_ctx_startup(INIT_FUNC_ARGS)
+PRN_LOCAL int prn_register_ctx(INIT_FUNC_ARGS)
 {
 	int resource_type = zend_register_list_destructors_ex(
 		prn_ctx_destroy, NULL, prn_ctx_rsrc_name, module_number);
@@ -74,7 +74,7 @@ static ZEND_RSRC_DTOR_FUNC(prn_ctx_destroy)
 
 PRN_LOCAL int prn_ctx_register(grn_ctx *ctx TSRMLS_DC)
 {
-	return zend_list_insert(ctx, le_grn_ctx TSRMLS_CC);
+	return zend_list_insert(ctx, le_grn_ctx);
 }
 
 /* }}} */
@@ -128,7 +128,6 @@ PRN_LOCAL zend_bool prn_ctx_check_impl(grn_ctx *ctx TSRMLS_DC)
 PRN_FUNCTION(grn_ctx_open)
 {
 	long flags = 0L;
-	int actual_flags;
 	grn_ctx *ctx;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &flags) == FAILURE) {
@@ -185,7 +184,7 @@ PRN_FUNCTION(grn_ctx_set_encoding)
 		RETURN_FALSE;
 	}
 
-	if (zend_ts_hash_index_exists(PRNG(encodings_ht), (ulong)encoding)) {
+	if (prn_is_valid_encoding(encoding)) {
 		GRN_CTX_SET_ENCODING(ctx, (grn_encoding)encoding);
 		RETURN_TRUE;
 	} else {

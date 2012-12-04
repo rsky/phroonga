@@ -7,7 +7,6 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-#include "phroonga.h"
 #include "prn_resource.h"
 
 #ifndef PHROONGA_CTX_H
@@ -17,7 +16,7 @@ BEGIN_EXTERN_C()
 
 /* {{{ internal function prototypes */
 
-PRN_LOCAL int prn_ctx_startup(INIT_FUNC_ARGS);
+PRN_LOCAL int prn_register_ctx(INIT_FUNC_ARGS);
 PRN_LOCAL int prn_ctx_register(grn_ctx *ctx TSRMLS_DC);
 PRN_LOCAL zval *prn_ctx_zval(zval *zv, grn_ctx *ctx TSRMLS_DC);
 PRN_LOCAL zend_bool prn_ctx_check_impl(grn_ctx *ctx TSRMLS_DC);

@@ -8,6 +8,16 @@
  */
 
 #include "prn_resource.h"
+#include "array.h"
+#include "ctx.h"
+#include "dat.h"
+#include "expr.h"
+#include "geo.h"
+#include "hash.h"
+#include "log.h"
+#include "obj.h"
+#include "pat.h"
+#include "snip.h"
 
 /* {{{ prn_resource_destroy() */
 
@@ -23,13 +33,13 @@ PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC)
 {
 	void *ptr = prsrc->resource.ptr;
 
-	/* delete from object counter table */
+	/* delete from address-id map */
 	if (sizeof(ulong) >= sizeof(uintptr_t)) {
-		zend_hash_index_del(PRNG(resources_ht), (ulong)((uintptr_t)ptr));
+		zend_hash_index_del(&PRNG(addr_id_map), (ulong)((uintptr_t)ptr));
 	} else {
 		char arKey[40] = {'\0'};
 		uint nKeyLength = (uint)snprintf(arKey, sizeof(arKey), "%p", ptr);
-		zend_hash_del(PRNG(resources_ht), arKey, nKeyLength);
+		zend_hash_del(&PRNG(addr_id_map), arKey, nKeyLength);
 	}
 
 	prsrc->dtor(prsrc->ctx, ptr);
@@ -46,13 +56,13 @@ PRN_LOCAL int prn_resource_register(void *ptr, int type,
 	prn_resource *prsrc;
 	int object_id;
 
-	HashTable *ht = PRNG(resources_ht);
+	HashTable *ht = &PRNG(addr_id_map);
 	char arKey[40] = {'\0'};
 	uint nKeyLength = 0;
 	ulong h = 0UL;
 	int *pData = NULL;
 
-	/* find from object counter table */
+	/* find from address-id map */
 	if (sizeof(ulong) >= sizeof(uintptr_t)) {
 		h = (ulong)((uintptr_t)ptr);
 	} else {
@@ -75,10 +85,10 @@ PRN_LOCAL int prn_resource_register(void *ptr, int type,
 	prsrc->resource.ptr = ptr;
 	prsrc->dtor = dtor;
 
-	object_id = zend_list_insert(prsrc, type TSRMLS_CC);
+	object_id = zend_list_insert(prsrc, type);
 	zend_list_addref(owner_id);
 
-	/* add to object counter table */
+	/* add to address-id map */
 	pData = &object_id;
 	zend_hash_quick_update(ht, arKey, nKeyLength, h, (void *)pData, sizeof(int), NULL);
 
@@ -137,28 +147,36 @@ PRN_LOCAL void prn_resource_ctx_zval(INTERNAL_FUNCTION_PARAMETERS)
 	if (resource_type == le_grn_ctx) {
 		ctx_id = (int)Z_LVAL_P(zobj);
 	} else if (
-		resource_type == le_grn_hash_cursor
-	 || resource_type == le_grn_array_cursor
-	 || resource_type == le_grn_pat_cursor
-	 || resource_type == le_grn_dat_cursor
+		   resource_type == le_grn_hash_cursor
+		|| resource_type == le_grn_array_cursor
+		|| resource_type == le_grn_pat_cursor
+		|| resource_type == le_grn_dat_cursor
 	) {
-		zval *zv;
-
-		MAKE_STD_ZVAL(zv);
-		ZVAL_RESOURCE(zv, (long)((prn_resource *)rsrc)->owner_id);
-
-		rsrc = zend_fetch_resource(&zv TSRMLS_CC,
-			-1, "grn_*", NULL, 4,
-			le_grn_hash, le_grn_array, le_grn_pat, le_grn_dat);
-
-		zval_ptr_dtor(&zv);
-		if (!rsrc) {
+		int owner_id = ((prn_resource *)rsrc)->owner_id;
+		int owner_type = 0;
+		prn_resource *owner = (prn_resource *)zend_list_find(owner_id, &owner_type);
+		if (!owner
+			|| (resource_type == le_grn_hash_cursor  && owner_type != le_grn_hash)
+			|| (resource_type == le_grn_array_cursor && owner_type != le_grn_array)
+			|| (resource_type == le_grn_pat_cursor   && owner_type != le_grn_dat)
+			|| (resource_type == le_grn_dat_cursor   && owner_type != le_grn_pat)
+		) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "cursor owner is already closed");
 			return;
 		}
 
-		ctx_id = ((prn_resource *)rsrc)->owner_id;
+		ctx_id = owner->owner_id;
 	} else {
 		ctx_id = ((prn_resource *)rsrc)->owner_id;
+	}
+
+	if (resource_type != le_grn_ctx) {
+		int type = 0;
+		void *ctx = zend_list_find(ctx_id, &type);
+		if (!ctx || type != le_grn_ctx) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "context is already closed");
+			return;
+		}
 	}
 
 	zend_list_addref(ctx_id);
@@ -173,8 +191,6 @@ PRN_LOCAL void prn_cursor_owner_zval(INTERNAL_FUNCTION_PARAMETERS)
 {
 	zval *zcursor = NULL;
 	prn_resource *prsrc = NULL;
-	int owner_id = 0;
-	int le_ctx = prn_get_le_ctx();
 
 	RETVAL_NULL();
 
@@ -193,6 +209,51 @@ PRN_LOCAL void prn_cursor_owner_zval(INTERNAL_FUNCTION_PARAMETERS)
 	zend_list_addref(prsrc->owner_id);
 
 	RETURN_RESOURCE((long)prsrc->owner_id);
+}
+
+/* }}} */
+/* {{{ prn_register_types() */
+
+PRN_LOCAL int prn_register_types(INIT_FUNC_ARGS)
+{
+	if (prn_register_ctx(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_register_obj(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+/*
+	if (prn_register_geo(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+	if (prn_register_snip(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+/*
+	if (prn_register_log(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+/*
+	if (prn_register_expr(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+*/
+	if (prn_register_hash(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_register_array(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_register_pat(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+	if (prn_register_dat(INIT_FUNC_ARGS_PASSTHRU) == FAILURE) {
+		return FAILURE;
+	}
+
+	return SUCCESS;
 }
 
 /* }}} */

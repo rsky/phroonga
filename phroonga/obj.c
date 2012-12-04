@@ -7,7 +7,6 @@
  * @license     http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 
-
 #include "obj.h"
 
 /* {{{ globals */
@@ -38,9 +37,9 @@ PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_obj_startup() */
+/* {{{ prn_register_obj() */
 
-PRN_LOCAL int prn_obj_startup(INIT_FUNC_ARGS)
+PRN_LOCAL int prn_register_obj(INIT_FUNC_ARGS)
 {
 	int resource_type = zend_register_list_destructors_ex(
 		prn_resource_destroy, NULL, prn_obj_rsrc_name, module_number);
@@ -112,7 +111,6 @@ PRN_FUNCTION(grn_obj_type)
 {
 	zval *zobj = NULL;
 	grn_obj *obj;
-	const char *name;
 
 	RETVAL_FALSE;
 
@@ -171,7 +169,7 @@ PRN_FUNCTION(grn_db_open)
 
 	if (path_len == 0) {
 		path = NULL;
-	} else if (strlen(path) != path_len) {
+	} else if (strlen(path) != (size_t)path_len) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "given path contains NUL byte");
 		return;
 	}
