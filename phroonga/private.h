@@ -16,7 +16,9 @@ BEGIN_EXTERN_C()
 
 /* {{{ visibility */
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#ifdef __clang__
+#define PRN_LOCAL __attribute__((visibility("hidden")))
+#elif defined(__GNUC__) && __GNUC__ >= 4
 #define PRN_LOCAL __attribute__((visibility("hidden")))
 #else
 #define PRN_LOCAL
