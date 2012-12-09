@@ -31,6 +31,7 @@ PRN_LOCAL ZEND_RSRC_DTOR_FUNC(prn_resource_destroy)
 
 PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC)
 {
+	grn_ctx *ctx = prsrc->ctx;
 	void *ptr = prsrc->resource.ptr;
 
 	/* delete from address-id map */
@@ -42,7 +43,17 @@ PRN_LOCAL void prn_resource_free(prn_resource *prsrc TSRMLS_DC)
 		zend_hash_del(&PRNG(addr_id_map), arKey, nKeyLength);
 	}
 
-	prsrc->dtor(prsrc->ctx, ptr);
+	/* deactivate databse */
+	if (prsrc->type == le_grn_obj) {
+		grn_obj *obj = prsrc->resource.obj;
+		if (obj->header.type == GRN_DB) {
+			if (!(ctx->flags & GRN_CTX_PER_DB)) {
+				grn_ctx_use(ctx, NULL);
+			}
+		}
+	}
+
+	prsrc->dtor(ctx, ptr);
 	zend_list_delete(prsrc->owner_id);
 	efree(prsrc);
 }
@@ -85,7 +96,11 @@ PRN_LOCAL int prn_resource_register(void *ptr, int type,
 	prsrc->resource.ptr = ptr;
 	prsrc->dtor = dtor;
 
+#if PHP_VERSION_ID >= 50400
+	object_id = zend_list_insert(prsrc, type TSRMLS_CC);
+#else
 	object_id = zend_list_insert(prsrc, type);
+#endif
 	zend_list_addref(owner_id);
 
 	/* add to address-id map */

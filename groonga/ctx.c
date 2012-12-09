@@ -18,6 +18,8 @@ PRN_DECLARE_RSRC_NAME(prn_ctx_rsrc_name, grn_ctx);
 /* {{{ function prototypes*/
 
 static ZEND_RSRC_DTOR_FUNC(prn_ctx_destroy);
+static grn_ctx *prn_get_default_ctx(TSRMLS_DC);
+static int prn_get_default_ctx_id(TSRMLS_DC);
 
 /* }}} */
 /* {{{ prn_get_le_ctx() */
@@ -37,11 +39,30 @@ static inline grn_ctx *prn_ctx_fetch_internal(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_ctx_fetch() */
+/* {{{ _prn_ctx_fetch() */
 
-PHPAPI grn_ctx *prn_ctx_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_ctx *_prn_ctx_fetch(zval *zv, int *ctx_id TSRMLS_DC)
 {
-	return prn_ctx_fetch_internal(zv TSRMLS_CC);
+	grn_ctx *ctx;
+	int rsrc_id;
+
+	if (zv) {
+		rsrc_id = (int)Z_LVAL_P(zv);
+		ctx = prn_ctx_fetch_internal(zv TSRMLS_CC);
+	} else {
+		int type = 0;
+		rsrc_id = prn_get_default_ctx_id(TSRMLS_CC);
+		ctx = (grn_ctx *)zend_list_find(rsrc_id, &type);
+		if (type != le_grn_ctx) {
+			ctx = NULL;
+		}
+	}
+
+	if (ctx && ctx_id) {
+		*ctx_id = rsrc_id;
+	}
+
+	return ctx;
 }
 
 /* }}} */
@@ -74,7 +95,11 @@ static ZEND_RSRC_DTOR_FUNC(prn_ctx_destroy)
 
 PRN_LOCAL int prn_ctx_register(grn_ctx *ctx TSRMLS_DC)
 {
+#if PHP_VERSION_ID >= 50400
+	return zend_list_insert(ctx, le_grn_ctx TSRMLS_CC);
+#else
 	return zend_list_insert(ctx, le_grn_ctx);
+#endif
 }
 
 /* }}} */
@@ -130,6 +155,8 @@ PRN_FUNCTION(grn_ctx_open)
 	long flags = 0L;
 	grn_ctx *ctx;
 
+	RETVAL_NULL();
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &flags) == FAILURE) {
 		return;
 	}
@@ -137,10 +164,16 @@ PRN_FUNCTION(grn_ctx_open)
 	ctx = grn_ctx_open((int)flags);
 	if (!ctx) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to open context");
-		RETURN_NULL();
+		return;
 	}
 
 	prn_ctx_zval(return_value, ctx TSRMLS_CC);
+
+	if (!PRNG(default_context_id)) {
+		int ctx_id = (int)Z_LVAL_P(return_value);
+		PRNG(default_context_id) = ctx_id;
+		zend_list_addref(ctx_id);
+	}
 }
 
 /* }}} */
@@ -152,13 +185,15 @@ PRN_FUNCTION(grn_ctx_get_encoding)
 	grn_ctx *ctx;
 	grn_encoding encoding;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	encoding = GRN_CTX_GET_ENCODING(ctx);
@@ -175,13 +210,15 @@ PRN_FUNCTION(grn_ctx_set_encoding)
 	long encoding = 0L;
 	grn_ctx *ctx;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &encoding) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	if (prn_is_valid_encoding(encoding)) {
@@ -189,7 +226,7 @@ PRN_FUNCTION(grn_ctx_set_encoding)
 		RETURN_TRUE;
 	} else {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "invalid encoding: %ld", encoding);
-		RETURN_FALSE;
+		return;
 	}
 }
 
@@ -202,13 +239,15 @@ PRN_FUNCTION(grn_ctx_get_command_version)
 	grn_ctx *ctx;
 	grn_command_version version;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	version = grn_ctx_get_command_version(ctx);
@@ -226,24 +265,26 @@ PRN_FUNCTION(grn_ctx_set_command_version)
 	grn_ctx *ctx;
 	grn_rc rc;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &version) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	if (!prn_ctx_check_impl(ctx TSRMLS_CC)) {
-		RETURN_FALSE;
+		return;
 	}
 
 	rc = grn_ctx_set_command_version(ctx, (grn_command_version)version);
 	if (rc != GRN_SUCCESS) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
 			"failed to set command version: %s", prn_errstr(rc));
-		RETURN_FALSE;
+		return;
 	}
 
 	RETURN_TRUE;
@@ -258,13 +299,15 @@ PRN_FUNCTION(grn_ctx_get_match_escalation_threshold)
 	grn_ctx *ctx;
 	long long int threshold;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	threshold = grn_ctx_get_match_escalation_threshold(ctx);
@@ -286,24 +329,107 @@ PRN_FUNCTION(grn_ctx_set_match_escalation_threshold)
 	grn_ctx *ctx;
 	grn_rc rc;
 
+	RETVAL_FALSE;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &threshold) == FAILURE) {
 		return;
 	}
 
 	ctx = prn_ctx_fetch_internal(zctx TSRMLS_CC);
 	if (!ctx) {
-		RETURN_FALSE;
+		return;
 	}
 
 	if (!prn_ctx_check_impl(ctx TSRMLS_CC)) {
-		RETURN_FALSE;
+		return;
 	}
 
 	rc = grn_ctx_set_match_escalation_threshold(ctx, (long long int)threshold);
 	if (rc != GRN_SUCCESS) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
 			"failed to set threshold: %s", prn_errstr(rc));
-		RETURN_FALSE;
+		return;
+	}
+
+	RETURN_TRUE;
+}
+
+/* }}} */
+/* {{{ prn_get_default_ctx_id() */
+
+static int prn_get_default_ctx_id(TSRMLS_DC)
+{
+	grn_ctx *ctx;
+	int ctx_id = PRNG(default_context_id);
+
+	if (ctx_id) {
+		int type = 0;
+		ctx = (grn_ctx *)zend_list_find(ctx_id, &type);
+		if (ctx && type == le_grn_ctx) {
+			return ctx_id;
+		}
+	}
+
+	ctx = grn_ctx_open(0);
+	if (!ctx) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			"failed to open the default context");
+		return 0;
+	}
+
+	ctx_id = prn_ctx_register(ctx TSRMLS_CC);
+	PRNG(default_context_id) = ctx_id;
+
+	return ctx_id;
+}
+
+/* }}} */
+/* {{{ grn_get_default_ctx() */
+
+PRN_FUNCTION(grn_get_default_ctx)
+{
+	int ctx_id;
+
+	RETVAL_NULL();
+
+	if (ZEND_NUM_ARGS() != 0) {
+		WRONG_PARAM_COUNT;
+	}
+
+	ctx_id = prn_get_default_ctx_id(TSRMLS_CC);
+	if (ctx_id) {
+		zend_list_addref(ctx_id);
+		RETURN_RESOURCE((long)ctx_id);
+	}
+}
+
+/* }}} */
+/* {{{ grn_set_default_ctx() */
+
+PRN_FUNCTION(grn_set_default_ctx)
+{
+	zval *zctx = NULL;
+	int ctx_id;
+
+	RETVAL_FALSE;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
+		return;
+	}
+
+	if (!prn_ctx_fetch_internal(zctx TSRMLS_CC)) {
+		return;
+	}
+
+	ctx_id = (int)Z_LVAL_P(zctx);
+
+	if (PRNG(default_context_id) != ctx_id) {
+		if (PRNG(default_context_id)) {
+			zend_list_delete(PRNG(default_context_id));
+		}
+
+		PRNG(default_context_id) = ctx_id;
+		zend_list_addref(ctx_id);
 	}
 
 	RETURN_TRUE;

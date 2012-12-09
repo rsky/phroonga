@@ -32,9 +32,9 @@ PHPAPI int prn_get_le_hash_cursor(void)
 }
 
 /* }}} */
-/* {{{ prn_hash_fetch() */
+/* {{{ _prn_hash_fetch() */
 
-PHPAPI grn_hash *prn_hash_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_hash *_prn_hash_fetch(zval *zv TSRMLS_DC)
 {
 	prn_hash *phash = prn_hash_fetch_internal(zv TSRMLS_CC);
 
@@ -46,9 +46,9 @@ PHPAPI grn_hash *prn_hash_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_hash_cursor_fetch() */
+/* {{{ _prn_hash_cursor_fetch() */
 
-PHPAPI grn_hash_cursor *prn_hash_cursor_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_hash_cursor *_prn_hash_cursor_fetch(zval *zv TSRMLS_DC)
 {
 	prn_hash_cursor *pcursor = prn_hash_cursor_fetch_internal(zv TSRMLS_CC);
 

@@ -23,9 +23,9 @@ PHPAPI int prn_get_le_obj(void)
 }
 
 /* }}} */
-/* {{{ prn_obj_fetch() */
+/* {{{ _prn_obj_fetch() */
 
-PHPAPI grn_obj *prn_obj_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_obj *_prn_obj_fetch(zval *zv TSRMLS_DC)
 {
 	prn_obj *pobj = prn_obj_fetch_internal(zv TSRMLS_CC);
 
@@ -118,7 +118,7 @@ PRN_FUNCTION(grn_obj_type)
 		return;
 	}
 
-	obj = prn_obj_fetch(zobj TSRMLS_CC);
+	obj = prn_obj_fetch(zobj);
 	if (!obj) {
 		return;
 	}
@@ -147,30 +147,30 @@ PRN_FUNCTION(grn_obj_type_name)
 PRN_FUNCTION(grn_db_open)
 {
 	zval *zctx = NULL;
+	grn_ctx *ctx;
+	int ctx_id = 0;
 	const char *path = NULL;
 	int path_len = 0;
 	/*zval *zoptions = NULL;*/
-	grn_ctx *ctx;
-	grn_obj *db;
 	grn_db_create_optarg *optarg = NULL;
+	grn_obj *db;
 
 	RETVAL_NULL();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs!",
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r!s!",
 			&zctx, &path, &path_len) == FAILURE
 	) {
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_ex(zctx, &ctx_id);
 	if (!ctx) {
 		return;
 	}
 
 	if (path_len == 0) {
 		path = NULL;
-	} else if (strlen(path) != (size_t)path_len) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "given path contains NUL byte");
+	} else if (!prn_check_path(path, path_len)) {
 		return;
 	}
 
@@ -181,7 +181,7 @@ PRN_FUNCTION(grn_db_open)
 		return;
 	}
 
-	PRN_RETVAL_GRN_OBJ(db, ctx, zctx);
+	PRN_RETVAL_GRN_OBJ(db, ctx, ctx_id);
 }
 
 /* }}} */
@@ -205,52 +205,31 @@ PRN_FUNCTION(grn_db_touch)
 }
 
 /* }}} */
-/* {{{ grn_ctx_use() */
+/* {{{ grn_db_use() */
 
-PRN_FUNCTION(grn_ctx_use)
+PRN_FUNCTION(grn_db_use)
 {
-	zval *zctx = NULL;
 	zval *zdb = NULL;
-	grn_ctx *ctx;
 	prn_obj *pobj = NULL;
 	grn_obj *db = NULL;
 	grn_rc rc;
 
 	RETVAL_FALSE;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rr!", &zctx, &zdb) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zdb) == FAILURE) {
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
-	if (!ctx) {
-		return;
-	}
-	if (ctx->flags & GRN_CTX_PER_DB) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
-			"don't use with context that has GRN_CTX_PER_DB flag");
+	pobj = prn_obj_fetch_internal(zdb TSRMLS_CC);
+	if (!pobj) {
 		return;
 	}
 
-	if (zdb) {
-		pobj = prn_obj_fetch_internal(zdb TSRMLS_CC);
-		if (!pobj) {
-			return;
-		}
-
-		if (pobj->ctx_id != (int)Z_LVAL_P(zctx)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING,
-				"the given database is not belongs to the given context");
-			return;
-		}
-
-		db = pobj->obj;
-	}
-
-	rc = grn_ctx_use(ctx, db);
+	rc = grn_ctx_use(pobj->ctx, pobj->obj);
 	if (rc != GRN_SUCCESS) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
-			"failed to use database: %s %s", prn_errstr(ctx->rc), ctx->errbuf);
+			"failed to use database: %s %s",
+			prn_errstr(pobj->ctx->rc), pobj->ctx->errbuf);
 		return;
 	}
 
@@ -264,15 +243,16 @@ PRN_FUNCTION(grn_ctx_db)
 {
 	zval *zctx = NULL;
 	grn_ctx *ctx;
+	int ctx_id = 0;
 	grn_obj *db;
 
 	RETVAL_NULL();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zctx) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r!", &zctx) == FAILURE) {
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_ex(zctx, &ctx_id);
 	if (!ctx) {
 		return;
 	}
@@ -282,7 +262,7 @@ PRN_FUNCTION(grn_ctx_db)
 		return;
 	}
 
-	PRN_RETVAL_GRN_OBJ(db, ctx, zctx);
+	PRN_RETVAL_GRN_OBJ(db, ctx, ctx_id);
 }
 
 /* }}} */
@@ -291,20 +271,21 @@ PRN_FUNCTION(grn_ctx_db)
 PRN_FUNCTION(grn_ctx_get)
 {
 	zval *zctx = NULL;
+	grn_ctx *ctx;
+	int ctx_id = 0;
 	const char *name = NULL;
 	int name_len = 0;
-	grn_ctx *ctx;
 	grn_obj *obj;
 
 	RETVAL_NULL();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs",
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r!s",
 			&zctx, &name, &name_len) == FAILURE
 	) {
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_ex(zctx, &ctx_id);
 	if (!ctx) {
 		return;
 	}
@@ -314,7 +295,7 @@ PRN_FUNCTION(grn_ctx_get)
 		return;
 	}
 
-	PRN_RETVAL_GRN_OBJ(obj, ctx, zctx);
+	PRN_RETVAL_GRN_OBJ(obj, ctx, ctx_id);
 }
 
 /* }}} */
@@ -323,17 +304,18 @@ PRN_FUNCTION(grn_ctx_get)
 PRN_FUNCTION(grn_ctx_at)
 {
 	zval *zctx = NULL;
-	long id = 0L;
 	grn_ctx *ctx;
+	int ctx_id = 0;
+	long id = 0L;
 	grn_obj *obj;
 
 	RETVAL_NULL();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zctx, &id) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r!l", &zctx, &id) == FAILURE) {
 		return;
 	}
 
-	ctx = prn_ctx_fetch(zctx TSRMLS_CC);
+	ctx = prn_ctx_fetch_ex(zctx, &ctx_id);
 	if (!ctx) {
 		return;
 	}
@@ -343,7 +325,7 @@ PRN_FUNCTION(grn_ctx_at)
 		return;
 	}
 
-	PRN_RETVAL_GRN_OBJ(obj, ctx, zctx);
+	PRN_RETVAL_GRN_OBJ(obj, ctx, ctx_id);
 }
 
 /* }}} */

@@ -134,13 +134,15 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_ctx_set_command_version, arginfo_ctx_set_command_version)
 	PHP_FE(grn_ctx_get_match_escalation_threshold, arginfo_ctx_common)
 	PHP_FE(grn_ctx_set_match_escalation_threshold, arginfo_ctx_set_match_escalation_threshold)
+	PHP_FE(grn_get_default_ctx, NULL)
+	PHP_FE(grn_set_default_ctx, NULL)
 	/* obj */
 	PRN_INTERNAL_FALIAS(grn_obj_ctx, prn_resource_ctx_zval, arginfo_obj_common)
 	PHP_FE(grn_obj_type, arginfo_obj_common)
 	PHP_FE(grn_obj_type_name, arginfo_obj_common)
 	PHP_FE(grn_db_open, arginfo_db_open)
 	PHP_FE(grn_db_touch, arginfo_db_common)
-	PHP_FE(grn_ctx_use, arginfo_ctx_use)
+	PHP_FE(grn_db_use, arginfo_db_common)
 	PHP_FE(grn_ctx_db, arginfo_ctx_common)
 	PHP_FE(grn_ctx_get, arginfo_ctx_get)
 	PHP_FE(grn_ctx_at, arginfo_ctx_at)
@@ -254,6 +256,7 @@ static PHP_MSHUTDOWN_FUNCTION(groonga)
 static PHP_RINIT_FUNCTION(groonga)
 {
 	zend_hash_clean(&PRNG(addr_id_map));
+	PRNG(default_context_id) = 0;
 
 	return SUCCESS;
 }
@@ -263,6 +266,9 @@ static PHP_RINIT_FUNCTION(groonga)
 
 static PHP_RSHUTDOWN_FUNCTION(groonga)
 {
+	if (PRNG(default_context_id)) {
+		zend_list_delete(PRNG(default_context_id));
+	}
 	return SUCCESS;
 }
 
@@ -471,6 +477,18 @@ PHPAPI const char *prn_errstr(grn_rc rc)
 	}
 
 	return "(undefined)";
+}
+
+/* }}} */
+/* {{{ _prn_check_path() */
+
+PRN_LOCAL int _prn_check_path(const char *path, size_t length TSRMLS_DC)
+{
+	if (strlen(path) != length) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "given path contains NUL byte");
+		return 0;
+	}
+	return 1;
 }
 
 /* }}} */

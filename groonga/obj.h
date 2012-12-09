@@ -27,7 +27,7 @@ PRN_FUNCTION(grn_obj_type);
 PRN_FUNCTION(grn_obj_type_name);
 PRN_FUNCTION(grn_db_open);
 PRN_FUNCTION(grn_db_touch);
-PRN_FUNCTION(grn_ctx_use);
+PRN_FUNCTION(grn_db_use);
 PRN_FUNCTION(grn_ctx_db);
 PRN_FUNCTION(grn_ctx_get);
 PRN_FUNCTION(grn_ctx_at);
@@ -50,25 +50,25 @@ static inline zval *prn_obj_zval(zval *zv, grn_obj *obj,
 		ctx_id, ctx, (prn_resource_dtor)dtor TSRMLS_CC);
 }
 
-#define PRN_ZVAL_GRN_OBJ(zv, obj, ctx, zctx) \
-	prn_obj_zval((zv), (obj), (int)Z_LVAL_P(zctx), (ctx), prn_obj_unlink TSRMLS_CC)
+#define PRN_ZVAL_GRN_OBJ(zv, obj, ctx, ctx_id) \
+	prn_obj_zval((zv), (obj), (ctx_id), (ctx), prn_obj_unlink TSRMLS_CC)
 
-#define PRN_RETVAL_GRN_OBJ(obj, ctx, zctx) \
-	PRN_ZVAL_GRN_OBJ(return_value, (obj), (ctx), (zctx))
+#define PRN_RETVAL_GRN_OBJ(obj, ctx, ctx_id) \
+	PRN_ZVAL_GRN_OBJ(return_value, (obj), (ctx), (ctx_id))
 
-#define PRN_RETURN_GRN_OBJ(obj, ctx, zctx) { \
-	PRN_RETVAL_GRN_OBJ(obj, ctx, zctx); \
+#define PRN_RETURN_GRN_OBJ(obj, ctx, ctx_id) { \
+	PRN_RETVAL_GRN_OBJ(obj, ctx, ctx_id); \
 	return; \
 }
 
-#define PRN_ZVAL_GRN_OBJ_EX(zv, obj, ctx, zctx, dtor) \
-	prn_obj_zval((zv), (obj), (int)Z_LVAL_P(zctx), (ctx), (dtor) TSRMLS_CC)
+#define PRN_ZVAL_GRN_OBJ_EX(zv, obj, ctx, ctx_id, dtor) \
+	prn_obj_zval((zv), (obj), (ctx_id), (ctx), (dtor) TSRMLS_CC)
 
-#define PRN_RETVAL_GRN_OBJ_EX(obj, ctx, zctx, dtor) \
-	PRN_ZVAL_GRN_OBJ_EX(return_value, (obj), (ctx), (zctx), (dtor))
+#define PRN_RETVAL_GRN_OBJ_EX(obj, ctx, ctx_id, dtor) \
+	PRN_ZVAL_GRN_OBJ_EX(return_value, (obj), (ctx), (ctx_id), (dtor))
 
-#define PRN_RETURN_GRN_OBJ_EX(obj, ctx, zctx, dtor) { \
-	PRN_RETVAL_GRN_OBJ_EX((obj), (ctx), (zctx), (dtor)); \
+#define PRN_RETURN_GRN_OBJ_EX(obj, ctx, ctx_id, dtor) { \
+	PRN_RETVAL_GRN_OBJ_EX((obj), (ctx), (ctx_id), (dtor)); \
 	return; \
 }
 

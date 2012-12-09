@@ -43,6 +43,8 @@ extern PRN_LOCAL MUTEX_T phroonga_mutex;
 PRN_LOCAL int prn_is_valid_encoding(long encoding);
 PRN_LOCAL int prn_is_valid_command_version(long version);
 PRN_LOCAL int prn_is_valid_log_level(long level);
+PRN_LOCAL int _prn_check_path(const char *path, size_t length TSRMLS_DC);
+#define prn_check_path(path, length) _prn_check_path((path), (size_t)(length) TSRMLS_CC)
 
 /* }}} */
 

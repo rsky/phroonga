@@ -31,6 +31,8 @@ PRN_FUNCTION(grn_ctx_get_command_version);
 PRN_FUNCTION(grn_ctx_set_command_version);
 PRN_FUNCTION(grn_ctx_get_match_escalation_threshold);
 PRN_FUNCTION(grn_ctx_set_match_escalation_threshold);
+PRN_FUNCTION(grn_get_default_ctx);
+PRN_FUNCTION(grn_set_default_ctx);
 
 /* }}} */
 

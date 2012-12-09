@@ -32,9 +32,9 @@ PHPAPI int prn_get_le_array_cursor(void)
 }
 
 /* }}} */
-/* {{{ prn_array_fetch() */
+/* {{{ _prn_array_fetch() */
 
-PHPAPI grn_array *prn_array_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_array *_prn_array_fetch(zval *zv TSRMLS_DC)
 {
 	prn_array *parray = prn_array_fetch_internal(zv TSRMLS_CC);
 
@@ -46,9 +46,9 @@ PHPAPI grn_array *prn_array_fetch(zval *zv TSRMLS_DC)
 }
 
 /* }}} */
-/* {{{ prn_array_cursor_fetch() */
+/* {{{ _prn_array_cursor_fetch() */
 
-PHPAPI grn_array_cursor *prn_array_cursor_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_array_cursor *_prn_array_cursor_fetch(zval *zv TSRMLS_DC)
 {
 	prn_array_cursor *pcursor = prn_array_cursor_fetch_internal(zv TSRMLS_CC);
 

@@ -34,7 +34,7 @@ PHPAPI int prn_get_le_pat_cursor(void)
 /* }}} */
 /* {{{ prn_pat_fetch() */
 
-PHPAPI grn_pat *prn_pat_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_pat *_prn_pat_fetch(zval *zv TSRMLS_DC)
 {
 	prn_pat *ppat = prn_pat_fetch_internal(zv TSRMLS_CC);
 
@@ -48,7 +48,7 @@ PHPAPI grn_pat *prn_pat_fetch(zval *zv TSRMLS_DC)
 /* }}} */
 /* {{{ prn_pat_cursor_fetch() */
 
-PHPAPI grn_pat_cursor *prn_pat_cursor_fetch(zval *zv TSRMLS_DC)
+PHPAPI grn_pat_cursor *_prn_pat_cursor_fetch(zval *zv TSRMLS_DC)
 {
 	prn_pat_cursor *pcursor = prn_pat_cursor_fetch_internal(zv TSRMLS_CC);
 
