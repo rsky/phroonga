@@ -2,12 +2,10 @@ dnl
 dnl phroonga: the PHP groonga extension
 dnl
 
-PHP_ARG_ENABLE(phroonga, [whether to enable groonga functions],
-[  --enable-phroonga       Enable groonga functions support], yes, yes)
 PHP_ARG_WITH(groonga, [groonga installation prefix],
 [  --with-groonga=PATH     groonga installation prefix (default: use pkg-config)], yes)
 
-if test "$PHP_PHROONGA" != "no"; then
+if test "$PHP_GROONGA" != "no"; then
 
   if test -z "$AWK"; then
     AC_PATH_PROGS(AWK, awk gawk nawk, [no])
@@ -102,7 +100,7 @@ if test "$PHP_PHROONGA" != "no"; then
   PHP_CHECK_LIBRARY(groonga, grn_get_version,
     [
       PHP_EVAL_INCLINE($GROONGA_INCLINE)
-      PHP_EVAL_LIBLINE($GROONGA_LIBLINE, PHROONGA_SHARED_LIBADD)
+      PHP_EVAL_LIBLINE($GROONGA_LIBLINE, GROONGA_SHARED_LIBADD)
     ],[
       AC_MSG_ERROR([wrong groonga library version or lib not found. Check config.log for more information])
     ],[
@@ -114,6 +112,6 @@ if test "$PHP_PHROONGA" != "no"; then
   PHROONGA_SOURCES="$PHROONGA_SOURCES geo.c log.c expr.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES hash.c array.c pat.c dat.c"
 
-  PHP_SUBST(PHROONGA_SHARED_LIBADD)
-  PHP_NEW_EXTENSION(phroonga, $PHROONGA_SOURCES, $ext_shared)
+  PHP_SUBST(GROONGA_SHARED_LIBADD)
+  PHP_NEW_EXTENSION(groonga, $PHROONGA_SOURCES, $ext_shared)
 fi

@@ -1,7 +1,7 @@
 --TEST--
 grn_ctx_set_command_version() function will fail
 --INI--
-phroonga.default_command_version = GRN_COMMAND_VERSION_1
+groonga.default_command_version = GRN_COMMAND_VERSION_1
 --FILE--
 <?php
 $ctx = grn_ctx_open();

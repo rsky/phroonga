@@ -1,7 +1,7 @@
 --TEST--
 grn_ctx_set_encoding() function
 --INI--
-phroonga.default_encoding = GRN_ENC_UTF8
+groonga.default_encoding = GRN_ENC_UTF8
 --FILE--
 <?php
 $ctx = grn_ctx_open();

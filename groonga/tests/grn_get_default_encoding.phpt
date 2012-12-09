@@ -1,7 +1,7 @@
 --TEST--
 grn_get_default_encoding() function
 --INI--
-phroonga.default_encoding = GRN_ENC_LATIN1
+groonga.default_encoding = GRN_ENC_LATIN1
 --FILE--
 <?php
 $encoding = grn_get_default_encoding();

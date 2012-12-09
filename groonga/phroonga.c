@@ -27,7 +27,7 @@
 
 /* {{{ globals */
 
-PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(phroonga)
+PRN_LOCAL ZEND_DECLARE_MODULE_GLOBALS(groonga)
 
 #ifdef ZTS
 PRN_LOCAL MUTEX_T phroonga_mutex = NULL;
@@ -36,13 +36,13 @@ PRN_LOCAL MUTEX_T phroonga_mutex = NULL;
 /* }}} */
 /* {{{ module function prototypes */
 
-static PHP_MINIT_FUNCTION(phroonga);
-static PHP_MSHUTDOWN_FUNCTION(phroonga);
-static PHP_RINIT_FUNCTION(phroonga);
-static PHP_RSHUTDOWN_FUNCTION(phroonga);
-static PHP_MINFO_FUNCTION(phroonga);
-static PHP_GINIT_FUNCTION(phroonga);
-static PHP_GSHUTDOWN_FUNCTION(phroonga);
+static PHP_MINIT_FUNCTION(groonga);
+static PHP_MSHUTDOWN_FUNCTION(groonga);
+static PHP_RINIT_FUNCTION(groonga);
+static PHP_RSHUTDOWN_FUNCTION(groonga);
+static PHP_MINFO_FUNCTION(groonga);
+static PHP_GINIT_FUNCTION(groonga);
+static PHP_GSHUTDOWN_FUNCTION(groonga);
 
 /* }}} */
 /* {{{ PHP function prototypes */
@@ -168,46 +168,46 @@ static zend_module_dep phroonga_deps[] = {
 /* {{{ ini entries */
 
 PHP_INI_BEGIN()
-PHP_INI_ENTRY("phroonga.default_encoding", "",
+PHP_INI_ENTRY("groonga.default_encoding", "",
 	PHP_INI_SYSTEM, prn_update_default_encoding)
-PHP_INI_ENTRY("phroonga.default_command_version", "",
+PHP_INI_ENTRY("groonga.default_command_version", "",
 	PHP_INI_SYSTEM, prn_update_default_command_version)
-PHP_INI_ENTRY("phroonga.default_match_escalation_threshold", "0",
+PHP_INI_ENTRY("groonga.default_match_escalation_threshold", "0",
 	PHP_INI_SYSTEM, prn_update_default_match_escalation_threshold)
-PHP_INI_ENTRY("phroonga.default_logger_max_level", "",
+PHP_INI_ENTRY("groonga.default_logger_max_level", "",
 	PHP_INI_SYSTEM, prn_update_default_logger_max_level)
 PHP_INI_END()
 
 /* }}} */
 /* {{{ module entry */
 
-zend_module_entry phroonga_module_entry = {
+zend_module_entry groonga_module_entry = {
 	STANDARD_MODULE_HEADER_EX,
 	NULL,
 	phroonga_deps,
-	"phroonga",
+	"groonga",
 	phroonga_functions,
-	PHP_MINIT(phroonga),
-	PHP_MSHUTDOWN(phroonga),
-	PHP_RINIT(phroonga),
-	PHP_RSHUTDOWN(phroonga),
-	PHP_MINFO(phroonga),
+	PHP_MINIT(groonga),
+	PHP_MSHUTDOWN(groonga),
+	PHP_RINIT(groonga),
+	PHP_RSHUTDOWN(groonga),
+	PHP_MINFO(groonga),
 	PHROONGA_VERSION,
-	PHP_MODULE_GLOBALS(phroonga),
-	PHP_GINIT(phroonga),
-	PHP_GSHUTDOWN(phroonga),
+	PHP_MODULE_GLOBALS(groonga),
+	PHP_GINIT(groonga),
+	PHP_GSHUTDOWN(groonga),
 	NULL,
 	STANDARD_MODULE_PROPERTIES_EX
 };
 
-#ifdef COMPILE_DL_PHROONGA
-ZEND_GET_MODULE(phroonga)
+#ifdef COMPILE_DL_GROONGA
+ZEND_GET_MODULE(groonga)
 #endif
 
 /* }}} */
 /* {{{ PHP_MINIT_FUNCTION */
 
-static PHP_MINIT_FUNCTION(phroonga)
+static PHP_MINIT_FUNCTION(groonga)
 {
 	if (grn_init() != GRN_SUCCESS) {
 		return FAILURE;
@@ -232,7 +232,7 @@ static PHP_MINIT_FUNCTION(phroonga)
 /* }}} */
 /* {{{ PHP_MSHUTDOWN_FUNCTION */
 
-static PHP_MSHUTDOWN_FUNCTION(phroonga)
+static PHP_MSHUTDOWN_FUNCTION(groonga)
 {
 	UNREGISTER_INI_ENTRIES();
 	prn_destroy_ini_param_tables();
@@ -251,7 +251,7 @@ static PHP_MSHUTDOWN_FUNCTION(phroonga)
 /* }}} */
 /* {{{ PHP_RINIT_FUNCTION */
 
-static PHP_RINIT_FUNCTION(phroonga)
+static PHP_RINIT_FUNCTION(groonga)
 {
 	zend_hash_clean(&PRNG(addr_id_map));
 
@@ -261,7 +261,7 @@ static PHP_RINIT_FUNCTION(phroonga)
 /* }}} */
 /* {{{ PHP_RSHUTDOWN_FUNCTION */
 
-static PHP_RSHUTDOWN_FUNCTION(phroonga)
+static PHP_RSHUTDOWN_FUNCTION(groonga)
 {
 	return SUCCESS;
 }
@@ -269,11 +269,11 @@ static PHP_RSHUTDOWN_FUNCTION(phroonga)
 /* }}} */
 /* {{{ PHP_MINFO_FUNCTION */
 
-static PHP_MINFO_FUNCTION(phroonga)
+static PHP_MINFO_FUNCTION(groonga)
 {
 	php_info_print_table_start();
-	php_info_print_table_row(2, "phroonga support", "enabled");
-	php_info_print_table_row(2, "phroonga extension version", PHROONGA_VERSION);
+	php_info_print_table_row(2, "groonga support", "enabled");
+	php_info_print_table_row(2, "groonga extension version", PHROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (compiled)", PRN_GROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (linking)", grn_get_version());
 	php_info_print_table_end();
@@ -284,17 +284,17 @@ static PHP_MINFO_FUNCTION(phroonga)
 /* }}} */
 /* {{{ PHP_GINIT_FUNCTION */
 
-static PHP_GINIT_FUNCTION(phroonga)
+static PHP_GINIT_FUNCTION(groonga)
 {
-	zend_hash_init(&phroonga_globals->addr_id_map, 32, NULL, NULL, 1);
+	zend_hash_init(&groonga_globals->addr_id_map, 32, NULL, NULL, 1);
 }
 
 /* }}} */
 /* {{{ PHP_GSHUTDOWN_FUNCTION */
 
-static PHP_GSHUTDOWN_FUNCTION(phroonga)
+static PHP_GSHUTDOWN_FUNCTION(groonga)
 {
-	zend_hash_destroy(&phroonga_globals->addr_id_map);
+	zend_hash_destroy(&groonga_globals->addr_id_map);
 }
 
 /* }}} */

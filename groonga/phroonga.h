@@ -24,16 +24,16 @@ BEGIN_EXTERN_C()
 
 /* {{{ module globals */
 
-ZEND_BEGIN_MODULE_GLOBALS(phroonga)
+ZEND_BEGIN_MODULE_GLOBALS(groonga)
 	HashTable addr_id_map;
-ZEND_END_MODULE_GLOBALS(phroonga)
+ZEND_END_MODULE_GLOBALS(groonga)
 
-ZEND_EXTERN_MODULE_GLOBALS(phroonga)
+ZEND_EXTERN_MODULE_GLOBALS(groonga)
 
 #ifdef ZTS
-#define PRNG(v) TSRMG(phroonga_globals_id, zend_phroonga_globals *, v)
+#define PRNG(v) TSRMG(groonga_globals_id, zend_groonga_globals *, v)
 #else
-#define PRNG(v) (phroonga_globals.v)
+#define PRNG(v) (groonga_globals.v)
 #endif
 
 /* }}} */
