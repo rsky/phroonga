@@ -276,6 +276,8 @@ static PHP_MINFO_FUNCTION(groonga)
 	php_info_print_table_row(2, "groonga extension version", PHROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (compiled)", PRN_GROONGA_VERSION);
 	php_info_print_table_row(2, "groonga version (linking)", grn_get_version());
+	php_info_print_table_row(2, "system plugins directory", grn_plugin_get_system_plugins_dir());
+	php_info_print_table_row(2, "plugin suffix", grn_plugin_get_suffix());
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();
