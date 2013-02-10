@@ -146,6 +146,17 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_ctx_db, arginfo_ctx_common)
 	PHP_FE(grn_ctx_get, arginfo_ctx_get)
 	PHP_FE(grn_ctx_at, arginfo_ctx_at)
+	/*
+	PHP_FE(grn_type_create, NULL)
+	PHP_FE(grn_plugin_register, NULL)
+	PHP_FE(grn_plugin_register_by_path, NULL)
+	*/
+	PHP_FE(grn_plugin_get_system_plugins_dir, NULL)
+	PHP_FE(grn_plugin_get_suffix, NULL)
+	/*
+	PHP_FE(grn_proc_create, NULL)
+	PHP_FE(grn_prog_get_info, NULL)
+	*/
 	/* geo */
 	/* snip */
 	/* log */

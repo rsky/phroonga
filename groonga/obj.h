@@ -31,6 +31,17 @@ PRN_FUNCTION(grn_db_use);
 PRN_FUNCTION(grn_ctx_db);
 PRN_FUNCTION(grn_ctx_get);
 PRN_FUNCTION(grn_ctx_at);
+/*
+PRN_FUNCTION(grn_type_create);
+PRN_FUNCTION(grn_plugin_register);
+PRN_FUNCTION(grn_plugin_register_by_path);
+*/
+PRN_FUNCTION(grn_plugin_get_system_plugins_dir);
+PRN_FUNCTION(grn_plugin_get_suffix);
+/*
+PRN_FUNCTION(grn_proc_create);
+PRN_FUNCTION(grn_prog_get_info);
+*/
 
 /* }}} */
 /* {{{ inline functions and utility macros */

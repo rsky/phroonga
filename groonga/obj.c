@@ -326,6 +326,38 @@ PRN_FUNCTION(grn_ctx_at)
 }
 
 /* }}} */
+/* {{{ grn_plugin_get_system_plugins_dir() */
+
+PRN_FUNCTION(grn_plugin_get_system_plugins_dir)
+{
+	const char *path;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		RETVAL_FALSE;
+		WRONG_PARAM_COUNT;
+	}
+
+	path = grn_plugin_get_system_plugins_dir();
+	RETURN_STRING(path, 1);
+}
+
+/* }}} */
+/* {{{ grn_plugin_get_suffix() */
+
+PRN_FUNCTION(grn_plugin_get_suffix)
+{
+	const char *path;
+
+	if (ZEND_NUM_ARGS() != 0) {
+		RETVAL_FALSE;
+		WRONG_PARAM_COUNT;
+	}
+
+	path = grn_plugin_get_suffix();
+	RETURN_STRING(path, 1);
+}
+
+/* }}} */
 
 /*
  * Local variables:
