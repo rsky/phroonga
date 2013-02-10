@@ -5,10 +5,7 @@ class Database extends Object
 {
     public function __construct($path = null, Context $ctx = null)
     {
-        if (is_resource($path)
-            && get_resource_type($path) === 'grn_obj'
-            && grn_obj_type($path) === GRN_DB
-        ) {
+        if ($this->isObject($path, GRN_DB)) {
             $db = $path;
         } else {
             $previous = ini_set('track_errors', '1');
