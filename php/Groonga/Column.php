@@ -5,6 +5,16 @@ class Column extends Object
 {
     public function __construct(Table $table, $name, array $options = array())
     {
+        $columnTypes = array(
+            self::TYPE_COLUMN_FIX_SIZE,
+            self::TYPE_COLUMN_VAR_SIZE,
+            self::TYPE_COLUMN_INDEX,
+        );
+        if ($this->isObject($name, $columnTypes)) {
+            parent::__construct($name);
+            return;
+        }
+
         $path = null;
         $flags = 0;
         $type = null;
@@ -28,6 +38,7 @@ class Column extends Object
         if (!$column) {
             throw new Exception($php_errormsg);
         }
-        $this->obj = $column;
+
+        parent::__construct($column);
     }
 }

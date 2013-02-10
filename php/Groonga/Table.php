@@ -3,9 +3,20 @@ namespace Groonga;
 
 class Table extends Object
 {
-    public function __construct(Database $db, $name = null, array $options = array())
+    public function __construct(Database $db, $name, array $options = array())
     {
         $db->activate();
+
+        $tableTypes = array(
+            self::TYPE_TABLE_HASH_KEY,
+            self::TYPE_TABLE_PAT_KEY,
+            self::TYPE_TABLE_DAT_KEY,
+            self::TYPE_TABLE_NO_KEY,
+        );
+        if ($this->isObject($name, $tableTypes)) {
+            parent::__construct($name);
+            return;
+        }
 
         $path = null;
         $flags = 0;
@@ -32,7 +43,8 @@ class Table extends Object
         if (!$table) {
             throw new Exception($php_errormsg);
         }
-        $this->obj = $table;
+
+        parent::__construct($table);
     }
 
     public function openColumn($name, array $options = array())

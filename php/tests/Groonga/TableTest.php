@@ -7,7 +7,7 @@ class TableTest extends TestCase
 {
     public function testInit()
     {
-        $table = new Table(new Database);
+        $table = new Table(new Database, null);
         $this->assertInstanceOf('Groonga\\Table', $table);
     }
 }

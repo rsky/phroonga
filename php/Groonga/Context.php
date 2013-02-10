@@ -3,6 +3,21 @@ namespace Groonga;
 
 class Context
 {
+    const GRN_ENC_DEFAULT = \GRN_ENC_DEFAULT;
+    const GRN_ENC_NONE    = \GRN_ENC_NONE;
+    const GRN_ENC_EUC_JP  = \GRN_ENC_EUC_JP;
+    const GRN_ENC_UTF8    = \GRN_ENC_UTF8;
+    const GRN_ENC_SJIS    = \GRN_ENC_SJIS;
+    const GRN_ENC_LATIN1  = \GRN_ENC_LATIN1;
+    const GRN_ENC_KOI8R   = \GRN_ENC_KOI8R;
+
+    const COMMAND_VERSION_DEFAULT = \GRN_COMMAND_VERSION_DEFAULT;
+    const COMMAND_VERSION_1       = \GRN_COMMAND_VERSION_1;
+    const COMMAND_VERSION_2       = \GRN_COMMAND_VERSION_2;
+    const COMMAND_VERSION_MIN     = \GRN_COMMAND_VERSION_MIN;
+    const COMMAND_VERSION_STABLE  = \GRN_COMMAND_VERSION_STABLE;
+    const COMMAND_VERSION_MAX     = \GRN_COMMAND_VERSION_MAX;
+
     private $ctx;
 
     public static function getDefaultContext()
@@ -66,7 +81,7 @@ class Context
         grn_ctx_set_match_escalation_threshold($this->ctx, $threshold);
     }
 
-    public function openDatabase($path = null)
+    public function openDatabase($path)
     {
         return new Database($path, $this);
     }
@@ -77,6 +92,6 @@ class Context
         if ($db) {
             return new Database($db);
         }
-        return new Database(null, $this);
+        return null;
     }
 }

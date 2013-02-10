@@ -5,7 +5,7 @@ class Database extends Object
 {
     public function __construct($path = null, Context $ctx = null)
     {
-        if ($this->isObject($path, GRN_DB)) {
+        if ($this->isObject($path, self::TYPE_DB)) {
             $db = $path;
         } else {
             $previous = ini_set('track_errors', '1');
@@ -16,13 +16,15 @@ class Database extends Object
                 throw new Exception($php_errormsg);
             }
         }
-        $this->obj = $db;
+
+        parent::__construct($db);
+
         $this->activate();
     }
 
     public function touch()
     {
-        grn_db_touch($this->db);
+        grn_db_touch($this->obj);
     }
 
     public function activate()
@@ -30,7 +32,7 @@ class Database extends Object
         grn_db_use($this->obj);
     }
 
-    public function openTable($name = null, array $options = array())
+    public function openTable($name, array $options = array())
     {
         return new Table($this, $name, $options);
     }
