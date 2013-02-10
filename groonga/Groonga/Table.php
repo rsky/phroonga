@@ -34,11 +34,6 @@ class Table extends Object
         $this->obj = $table;
     }
 
-    public function getResource()
-    {
-        return $this->obj;
-    }
-
     public function openColumn($name, array $options = array())
     {
         return new Column($this, $name, $options);

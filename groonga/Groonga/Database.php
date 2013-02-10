@@ -11,7 +11,9 @@ class Database extends Object
         ) {
             $db = $path;
         } else {
-            $db = grn_db_open($ctx ? $ctx->getResource() : null, $path);
+            $previous = ini_set('track_errors', '1');
+            $db = @grn_db_open($ctx ? $ctx->getResource() : null, $path);
+            ini_set('track_errors', $previous);
             if (!$db) {
                 throw new Exception($php_errormsg);
             }
