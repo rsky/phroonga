@@ -37,7 +37,7 @@ class Object
 
     public function __construct($obj)
     {
-        if (!$this->isObject($obj)) {
+        if (!$this->isObjectResource($obj)) {
             throw new InvalidArgumentException(
                 'Argument #1 must be a grn_obj resource'
             );
@@ -52,7 +52,12 @@ class Object
 
     public function getContext()
     {
-        return new Context(grn_obj_ctx($this->obj));
+        if ($this->obj) {
+            $ctx = grn_obj_ctx($this->obj);
+        } else {
+            $ctx = grn_get_default_ctx();
+        }
+        return new Context($ctx);
     }
 
     public function getType()
@@ -60,7 +65,7 @@ class Object
         return grn_obj_type($this->obj);
     }
 
-    protected function isObject($value, $type = null)
+    protected function isObjectResource($value, $type = null)
     {
         if (is_resource($value) && get_resource_type($value) === 'grn_obj') {
             if (is_null($type)) {
@@ -73,5 +78,24 @@ class Object
             return $objType === $type;
         }
         return false;
+    }
+
+    protected function fetchResource($value, Context $ctx = null)
+    {
+        if (is_object($value) && $value instanceof Object) {
+            return $value->getResource();
+        }
+
+        if (is_scalar($value)) {
+            if (!$ctx) {
+                $ctx = $this->getContext();
+            }
+            if (is_int($value)) {
+                return grn_ctx_at($ctx->getResource(), $value);
+            }
+            return grn_ctx_get($ctx->getResource(), $value);
+        }
+
+        return $value;
     }
 }

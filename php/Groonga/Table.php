@@ -13,7 +13,7 @@ class Table extends Object
             self::TYPE_TABLE_DAT_KEY,
             self::TYPE_TABLE_NO_KEY,
         );
-        if ($this->isObject($name, $tableTypes)) {
+        if ($this->isObjectResource($name, $tableTypes)) {
             parent::__construct($name);
             return;
         }
@@ -25,7 +25,11 @@ class Table extends Object
 
         foreach (array('path', 'flags', 'keyType', 'valueType') as $option) {
             if (isset($options[$option])) {
-                $$option = $options[$option];
+                if ($option === 'keyType' || $option === 'valueType') {
+                    $$option = $this->fetchResource($options[$option]);
+                } else {
+                    $$option = $options[$option];
+                }
             }
         }
 
@@ -47,7 +51,7 @@ class Table extends Object
         parent::__construct($table);
     }
 
-    public function openColumn($name, array $options = array())
+    public function column($name, array $options = array())
     {
         return new Column($this, $name, $options);
     }

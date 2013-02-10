@@ -10,18 +10,23 @@ class Column extends Object
             self::TYPE_COLUMN_VAR_SIZE,
             self::TYPE_COLUMN_INDEX,
         );
-        if ($this->isObject($name, $columnTypes)) {
+        if ($this->isObjectResource($name, $columnTypes)) {
             parent::__construct($name);
             return;
         }
 
+        $ctx = $table->getContext();
         $path = null;
         $flags = 0;
         $type = null;
 
         foreach (array('path', 'flags', 'type') as $option) {
             if (isset($options[$option])) {
-                $$option = $options[$option];
+                if ($option === 'type') {
+                    $$option = $this->fetchResource($options[$option], $ctx);
+                } else {
+                    $$option = $options[$option];
+                }
             }
         }
 

@@ -81,7 +81,7 @@ class Context
         grn_ctx_set_match_escalation_threshold($this->ctx, $threshold);
     }
 
-    public function openDatabase($path)
+    public function database($path)
     {
         return new Database($path, $this);
     }
@@ -94,4 +94,23 @@ class Context
         }
         return null;
     }
+
+    public function getObject($name)
+    {
+        $obj = grn_ctx_get($this->ctx, $name);
+        if ($obj) {
+            return new Object($obj);
+        }
+        return null;
+    }
+
+    public function getObjectById($id)
+    {
+        $obj = grn_ctx_at($this->ctx, $id);
+        if ($obj) {
+            return new Object($obj);
+        }
+        return null;
+    }
+
 }
