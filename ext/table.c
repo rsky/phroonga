@@ -82,6 +82,9 @@ static void prn_table_open_or_create(INTERNAL_FUNCTION_PARAMETERS, int mode)
 	}
 
 	if (!table && (mode & PRN_RESOURCE_CREATE)) {
+		if (name) {
+			flags |= GRN_OBJ_PERSISTENT;
+		}
 		table = grn_table_create(ctx, name, name_len, path,
 			(grn_obj_flags)flags, key_type, value_type);
 	}
