@@ -76,7 +76,6 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 		case GRN_MSG: return "msg";
 		case GRN_QUERY: return "query";
 		case GRN_ACCESSOR: return "accessor";
-		case GRN_ACCESSOR_VIEW: return "accessor_view";
 		case GRN_SNIP: return "snip";
 		case GRN_PATSNIP: return "patsnip";
 		case GRN_STRING: return "string";
@@ -84,7 +83,6 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 		case GRN_CURSOR_TABLE_PAT_KEY: return "cursor_table_pat_key";
 		case GRN_CURSOR_TABLE_DAT_KEY: return "cursor_table_dat_key";
 		case GRN_CURSOR_TABLE_NO_KEY: return "cursor_table_no_key";
-		case GRN_CURSOR_TABLE_VIEW: return "cursor_table_view";
 		case GRN_CURSOR_COLUMN_INDEX: return "cursor_column_index";
 		case GRN_CURSOR_COLUMN_GEO_INDEX: return "cursor_column_geo_index";
 		case GRN_TYPE: return "type";
@@ -94,7 +92,6 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 		case GRN_TABLE_PAT_KEY: return "table_pat_key";
 		case GRN_TABLE_DAT_KEY: return "table_dat_key";
 		case GRN_TABLE_NO_KEY: return "table_no_key";
-		case GRN_TABLE_VIEW: return "table_view";
 		case GRN_DB: return "db";
 		case GRN_COLUMN_FIX_SIZE: return "column_fix_size";
 		case GRN_COLUMN_VAR_SIZE: return "column_var_size";

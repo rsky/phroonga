@@ -474,6 +474,7 @@ PHPAPI const char *prn_errstr(grn_rc rc)
 		case GRN_TOO_SMALL_LIMIT: return "TOO_SMALL_LIMIT";
 		case GRN_CAS_ERROR: return "CAS_ERROR";
 		case GRN_UNSUPPORTED_COMMAND_VERSION: return "UNSUPPORTED_COMMAND_VERSION";
+		case GRN_NORMALIZER_ERROR: return "NORMALIZER_ERROR";
 	}
 
 	return "(undefined)";
