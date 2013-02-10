@@ -15,6 +15,7 @@
 #include "prn_constants.h"
 
 #include "array.h"
+#include "column.h"
 #include "ctx.h"
 #include "dat.h"
 #include "expr.h"
@@ -24,6 +25,7 @@
 #include "obj.h"
 #include "pat.h"
 #include "snip.h"
+#include "table.h"
 
 /* {{{ globals */
 
@@ -112,6 +114,29 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_at, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 ZEND_END_ARG_INFO()
 
 /* }}} */
+/* {{{ argument informations (table) */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_table_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, name)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, flags)
+	ZEND_ARG_INFO(0, key_type)
+	ZEND_ARG_INFO(0, value_type)
+ZEND_END_ARG_INFO()
+
+/* }}} */
+/* {{{ argument informations (column) */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_column_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, table)
+	ZEND_ARG_INFO(0, name)
+	ZEND_ARG_INFO(0, path)
+	ZEND_ARG_INFO(0, flags)
+	ZEND_ARG_INFO(0, type)
+ZEND_END_ARG_INFO()
+
+/* }}} */
 /* {{{ argument informations (log) */
 
 /* }}} */
@@ -157,6 +182,10 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_proc_create, NULL)
 	PHP_FE(grn_prog_get_info, NULL)
 	*/
+	/* table */
+	PHP_FE(grn_table_open, arginfo_table_open)
+	/* column */
+	PHP_FE(grn_column_open, arginfo_column_open)
 	/* geo */
 	/* snip */
 	/* log */

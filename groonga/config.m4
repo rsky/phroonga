@@ -109,6 +109,7 @@ if test "$PHP_GROONGA" != "no"; then
 
   PHROONGA_SOURCES="phroonga.c prn_constants.c prn_ini.c prn_resource.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES ctx.c obj.c snip.c"
+  PHROONGA_SOURCES="$PHROONGA_SOURCES table.c column.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES geo.c log.c expr.c"
   PHROONGA_SOURCES="$PHROONGA_SOURCES hash.c array.c pat.c dat.c"
 
