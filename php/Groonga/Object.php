@@ -38,7 +38,7 @@ class Object
     public function __construct($obj)
     {
         if (!$this->isObjectResource($obj)) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Argument #1 must be a grn_obj resource'
             );
         }
