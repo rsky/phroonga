@@ -18,6 +18,7 @@ class Context
             $previous = ini_set('track_errors', '1');
             $ctx = @grn_ctx_open($flags);
             ini_set('track_errors', $previous);
+
             if (!$ctx) {
                 throw new Exception($php_errormsg);
             }

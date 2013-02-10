@@ -16,7 +16,9 @@ BEGIN_EXTERN_C()
 
 /* {{{ PHP function prototypes */
 
+PRN_FUNCTION(grn_column_create);
 PRN_FUNCTION(grn_column_open);
+PRN_FUNCTION(grn_column_open_or_create);
 
 /* }}} */
 

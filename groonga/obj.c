@@ -139,18 +139,19 @@ PRN_FUNCTION(grn_obj_type_name)
 }
 
 /* }}} */
-/* {{{ grn_db_open() */
+/* {{{ prn_db_open_or_create */
 
-PRN_FUNCTION(grn_db_open)
+static void prn_db_open_or_create(INTERNAL_FUNCTION_PARAMETERS, int mode)
 {
 	zval *zctx = NULL;
-	grn_ctx *ctx;
+	grn_ctx *ctx = NULL;
 	int ctx_id = 0;
 	const char *path = NULL;
 	int path_len = 0;
+	/*TODO: support for optarg*/
 	/*zval *zoptions = NULL;*/
 	grn_db_create_optarg *optarg = NULL;
-	grn_obj *db;
+	grn_obj *db = NULL;
 
 	RETVAL_NULL();
 
@@ -171,14 +172,47 @@ PRN_FUNCTION(grn_db_open)
 		return;
 	}
 
-	GRN_DB_OPEN_OR_CREATE(ctx, path, optarg, db);
+	if (mode & PRN_RESOURCE_OPEN) {
+		db = grn_db_open(ctx, path);
+	}
+
+	if (!db && (mode & PRN_RESOURCE_CREATE)) {
+		db = grn_db_create(ctx, path, optarg);
+	}
+
 	if (!db) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING,
-			"failed to open database: %s %s", prn_errstr(ctx->rc), ctx->errbuf);
+			"failed to %s database: %s %s",
+			(mode & PRN_RESOURCE_CREATE) ? "create" : "open",
+			prn_errstr(ctx->rc), ctx->errbuf);
 		return;
 	}
 
 	PRN_RETVAL_GRN_OBJ(db, ctx, ctx_id);
+}
+
+/* }}} */
+/* {{{ grn_db_create() */
+
+PRN_FUNCTION(grn_db_create)
+{
+	prn_db_open_or_create(INTERNAL_FUNCTION_PARAM_PASSTHRU, PRN_RESOURCE_CREATE);
+}
+
+/* }}} */
+/* {{{ grn_db_open() */
+
+PRN_FUNCTION(grn_db_open)
+{
+	prn_db_open_or_create(INTERNAL_FUNCTION_PARAM_PASSTHRU, PRN_RESOURCE_OPEN);
+}
+
+/* }}} */
+/* {{{ grn_db_open_or_create() */
+
+PRN_FUNCTION(grn_db_open_or_create)
+{
+	prn_db_open_or_create(INTERNAL_FUNCTION_PARAM_PASSTHRU, PRN_RESOURCE_OPEN_OR_CREATE);
 }
 
 /* }}} */

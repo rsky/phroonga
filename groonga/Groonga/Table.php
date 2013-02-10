@@ -19,7 +19,7 @@ class Table extends Object
         }
 
         $previous = ini_set('track_errors', '1');
-        $table = @grn_table_open(
+        $table = @grn_table_open_or_create(
             $db->getContext()->getResource(),
             $name,
             $path,
@@ -28,6 +28,7 @@ class Table extends Object
             $valueType
         );
         ini_set('track_errors', $previous);
+
         if (!$table) {
             throw new Exception($php_errormsg);
         }

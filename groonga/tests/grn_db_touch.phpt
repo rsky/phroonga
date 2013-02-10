@@ -4,7 +4,7 @@ grn_db_touch() function
 <?php
 error_reporting(E_ALL);
 $ctx = grn_ctx_open();
-$db = grn_db_open($ctx, null);
+$db = grn_db_create($ctx, null);
 if ($db) {
     grn_db_touch($db);
 }

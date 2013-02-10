@@ -24,6 +24,10 @@ BEGIN_EXTERN_C()
 #define PRN_EXTERN_RSRC_NAME(name) extern PRN_LOCAL const char * const name
 #endif
 
+#define PRN_RESOURCE_CREATE 1
+#define PRN_RESOURCE_OPEN 2
+#define PRN_RESOURCE_OPEN_OR_CREATE 3
+
 /* }}} */
 /* {{{ external globals */
 

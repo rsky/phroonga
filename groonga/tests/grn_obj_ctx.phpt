@@ -3,7 +3,7 @@ grn_obj_ctx() function
 --FILE--
 <?php
 $ctx = grn_ctx_open();
-$db = grn_db_open($ctx, null);
+$db = grn_db_create($ctx, null);
 $result = null;
 if ($db) {
     $result = grn_obj_ctx($db);

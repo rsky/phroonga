@@ -92,10 +92,15 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_db_common, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1
 	ZEND_ARG_INFO(0, db)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_db_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_db_create, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, ctx)
 	ZEND_ARG_INFO(0, path)
 /*	ZEND_ARG_ARRAY_INFO(0, options, 1) */
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_db_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, path)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_ctx_use, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
@@ -116,7 +121,7 @@ ZEND_END_ARG_INFO()
 /* }}} */
 /* {{{ argument informations (table) */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_table_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_table_create, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, ctx)
 	ZEND_ARG_INFO(0, name)
 	ZEND_ARG_INFO(0, path)
@@ -125,15 +130,25 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_table_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 
 	ZEND_ARG_INFO(0, value_type)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_table_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, ctx)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
 /* }}} */
 /* {{{ argument informations (column) */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_column_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_column_create, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, table)
 	ZEND_ARG_INFO(0, name)
 	ZEND_ARG_INFO(0, path)
 	ZEND_ARG_INFO(0, flags)
 	ZEND_ARG_INFO(0, type)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_column_open, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, table)
+	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
 /* }}} */
@@ -165,7 +180,9 @@ static zend_function_entry phroonga_functions[] = {
 	PRN_INTERNAL_FALIAS(grn_obj_ctx, prn_resource_ctx_zval, arginfo_obj_common)
 	PHP_FE(grn_obj_type, arginfo_obj_common)
 	PHP_FE(grn_obj_type_name, arginfo_obj_common)
+	PHP_FE(grn_db_create, arginfo_db_create)
 	PHP_FE(grn_db_open, arginfo_db_open)
+	PHP_FE(grn_db_open_or_create, arginfo_db_create)
 	PHP_FE(grn_db_touch, arginfo_db_common)
 	PHP_FE(grn_db_use, arginfo_db_common)
 	PHP_FE(grn_ctx_db, arginfo_ctx_common)
@@ -183,9 +200,13 @@ static zend_function_entry phroonga_functions[] = {
 	PHP_FE(grn_prog_get_info, NULL)
 	*/
 	/* table */
+	PHP_FE(grn_table_create, arginfo_table_create)
 	PHP_FE(grn_table_open, arginfo_table_open)
+	PHP_FE(grn_table_open_or_create, arginfo_table_create)
 	/* column */
+	PHP_FE(grn_column_create, arginfo_column_create)
 	PHP_FE(grn_column_open, arginfo_column_open)
+	PHP_FE(grn_column_open_or_create, arginfo_column_create)
 	/* geo */
 	/* snip */
 	/* log */

@@ -9,8 +9,9 @@ class Database extends Object
             $db = $path;
         } else {
             $previous = ini_set('track_errors', '1');
-            $db = @grn_db_open($ctx ? $ctx->getResource() : null, $path);
+            $db = @grn_db_open_or_create($ctx ? $ctx->getResource() : null, $path);
             ini_set('track_errors', $previous);
+
             if (!$db) {
                 throw new Exception($php_errormsg);
             }

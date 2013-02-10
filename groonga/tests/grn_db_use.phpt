@@ -4,8 +4,8 @@ grn_db_use() function
 <?php
 error_reporting(E_ALL);
 $ctx = grn_ctx_open();
-$db1 = grn_db_open($ctx, null);
-$db2 = grn_db_open($ctx, null);
+$db1 = grn_db_create($ctx, null);
+$db2 = grn_db_create($ctx, null);
 if (grn_db_use($db1) && grn_ctx_db($ctx) === $db1) {
     echo "1:OK\n";
 } else {

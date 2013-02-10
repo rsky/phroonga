@@ -25,7 +25,9 @@ PRN_LOCAL grn_rc prn_obj_unlink(grn_ctx *ctx, grn_obj *obj);
 
 PRN_FUNCTION(grn_obj_type);
 PRN_FUNCTION(grn_obj_type_name);
+PRN_FUNCTION(grn_db_create);
 PRN_FUNCTION(grn_db_open);
+PRN_FUNCTION(grn_db_open_or_create);
 PRN_FUNCTION(grn_db_touch);
 PRN_FUNCTION(grn_db_use);
 PRN_FUNCTION(grn_ctx_db);

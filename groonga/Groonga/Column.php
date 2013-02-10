@@ -16,7 +16,7 @@ class Column extends Object
         }
 
         $previous = ini_set('track_errors', '1');
-        $column = @grn_column_open(
+        $column = @grn_column_open_or_create(
             $table->getResource(),
             $name,
             $path,
@@ -24,6 +24,7 @@ class Column extends Object
             $type
         );
         ini_set('track_errors', $previous);
+
         if (!$column) {
             throw new Exception($php_errormsg);
         }
