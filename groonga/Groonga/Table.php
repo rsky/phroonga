@@ -13,8 +13,8 @@ class Table extends Object
         $valueType = null;
 
         foreach (array('path', 'flags', 'keyType', 'valueType') as $option) {
-            if (isset($option[$option])) {
-                $$option = $option[$option];
+            if (isset($options[$option])) {
+                $$option = $options[$option];
             }
         }
 

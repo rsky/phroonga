@@ -10,8 +10,8 @@ class Column extends Object
         $type = null;
 
         foreach (array('path', 'flags', 'type') as $option) {
-            if (isset($option[$option])) {
-                $$option = $option[$option];
+            if (isset($options[$option])) {
+                $$option = $options[$option];
             }
         }
 
