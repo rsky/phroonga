@@ -15,7 +15,7 @@ static void prn_column_open_or_create(INTERNAL_FUNCTION_PARAMETERS, int mode)
 {
 	zval *ztable = NULL, *ztype = NULL;
 	grn_ctx *ctx = NULL;
-	prn_obj *intern = NULL;
+	prn_obj *pboj = NULL;
 	grn_obj *table, *type = NULL;
 	const char *path = NULL, *name = NULL;
 	int path_len = 0, name_len = 0;
@@ -39,12 +39,12 @@ static void prn_column_open_or_create(INTERNAL_FUNCTION_PARAMETERS, int mode)
 		return;
 	}
 
-	intern = prn_obj_fetch_internal(ztable TSRMLS_CC);
-	if (!intern) {
+	pboj = prn_obj_fetch_internal(ztable TSRMLS_CC);
+	if (!pboj) {
 		return;
 	}
-	table = intern->obj;
-	ctx = intern->ctx;
+	table = pboj->obj;
+	ctx = pboj->ctx;
 	if (ztype) {
 		type = prn_obj_fetch(ztype);
 	}
@@ -86,7 +86,7 @@ static void prn_column_open_or_create(INTERNAL_FUNCTION_PARAMETERS, int mode)
 		return;
 	}
 
-	PRN_RETVAL_GRN_OBJ(column, ctx, intern->ctx_id);
+	PRN_RETVAL_GRN_OBJ(column, ctx, pboj->ctx_id);
 }
 
 /* }}} */

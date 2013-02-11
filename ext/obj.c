@@ -102,25 +102,31 @@ PHPAPI const char *prn_obj_type_name(grn_obj *obj)
 }
 
 /* }}} */
+/* {{{ prn_obj_from_arg_internal() */
+
+PRN_LOCAL prn_obj *prn_obj_from_arg_internal(INTERNAL_FUNCTION_PARAMETERS)
+{
+	zval *zobj = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
+		return NULL;
+	}
+
+	return prn_obj_fetch_internal(zobj TSRMLS_CC);
+}
+
+/* }}} */
 /* {{{ grn_obj_type() */
 
 PRN_FUNCTION(grn_obj_type)
 {
-	zval *zobj = NULL;
-	grn_obj *obj;
+	grn_obj *obj = prn_obj_from_arg(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
-	RETVAL_FALSE;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zobj) == FAILURE) {
-		return;
+	if (obj) {
+		RETURN_LONG((long)obj->header.type);
 	}
 
-	obj = prn_obj_fetch(zobj);
-	if (!obj) {
-		return;
-	}
-
-	RETURN_LONG((long)obj->header.type);
+	RETURN_FALSE;
 }
 
 /* }}} */
@@ -128,14 +134,69 @@ PRN_FUNCTION(grn_obj_type)
 
 PRN_FUNCTION(grn_obj_type_name)
 {
-	PHP_FN(grn_obj_type)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-	if (Z_TYPE_P(return_value) == IS_LONG) {
-		grn_obj obj = { .header.type = (unsigned char)Z_LVAL_P(return_value) };
-		const char *name = prn_obj_type_name(&obj);
+	grn_obj *obj = prn_obj_from_arg(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+	if (obj) {
+		const char *name = prn_obj_type_name(obj);
 		if (name) {
 			RETURN_STRING(name, 1);
 		}
 	}
+
+	RETURN_FALSE;
+}
+
+/* }}} */
+/* {{{ grn_obj_db() */
+
+PRN_FUNCTION(grn_obj_db)
+{
+	prn_obj *pobj = prn_obj_from_arg_internal(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+	if (pobj) {
+		grn_obj *db = grn_obj_db(pobj->ctx, pobj->obj);
+		if (db) {
+			PRN_RETURN_GRN_OBJ(db, pobj->ctx, pobj->ctx_id);
+		}
+	}
+
+	RETURN_FALSE;
+}
+
+/* }}} */
+/* {{{ grn_obj_id() */
+
+PRN_FUNCTION(grn_obj_id)
+{
+	prn_obj *pobj = prn_obj_from_arg_internal(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	if (pobj) {
+		RETURN_LONG((long)grn_obj_id(pobj->ctx, pobj->obj));
+	}
+	RETURN_FALSE;
+}
+
+/* }}} */
+/* {{{ grn_obj_flags() */
+
+PRN_FUNCTION(grn_obj_flags)
+{
+	grn_obj *obj = prn_obj_from_arg(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	if (obj) {
+		RETURN_LONG((long)obj->header.flags);
+	}
+	RETURN_FALSE;
+}
+
+/* }}} */
+/* {{{ grn_obj_domain() */
+
+PRN_FUNCTION(grn_obj_domain)
+{
+	grn_obj *obj = prn_obj_from_arg(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	if (obj) {
+		RETURN_LONG((long)obj->header.domain);
+	}
+	RETURN_FALSE;
 }
 
 /* }}} */
@@ -228,11 +289,9 @@ PRN_FUNCTION(grn_db_touch)
 	}
 
 	pobj = prn_obj_fetch_internal(zdb TSRMLS_CC);
-	if (!pobj->obj || pobj->obj->header.type != GRN_DB) {
-		return;
+	if (pobj && pobj->obj && pobj->obj->header.type == GRN_DB) {
+		grn_db_touch(pobj->ctx, pobj->obj);
 	}
-
-	grn_db_touch(pobj->ctx, pobj->obj);
 }
 
 /* }}} */
